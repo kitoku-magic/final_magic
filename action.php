@@ -208,18 +208,18 @@ abstract class action
    * 全てのフォームデータをModelのセッターに設定する
    *
    * @access public
-	 * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列('_GET','_POST','_COOKIE')
+   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列('_GET','_POST','_COOKIE')
    */
   public function set_form_to_model($request_parameter_array)
   {
-		foreach ($request_parameter_array as $request_parameter_name)
-		{
-    	foreach ($$request_parameter_name as $key => $val)
-			{
-				// モデルのセッターに値を設定していく
-      	$this->get_model()->create_accessor_name('set', $key, $val);
-			}
-		}
+    foreach ($request_parameter_array as $request_parameter_name)
+    {
+      foreach ($$request_parameter_name as $key => $val)
+      {
+        // モデルのセッターに値を設定していく
+        $this->get_model()->create_accessor_name('set', $key, $val);
+      }
+    }
   }
 
   /**
