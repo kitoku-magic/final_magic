@@ -365,7 +365,7 @@ class mail_send
       // EHLOがもしダメだったら、HELOでセッションを確立してみる
       if (false === $this->send_smtp_message('HELO ' . $SMTP_CLIENT_NAME))
       {
-        $this->set_smtp_response_message($this->get_smtp_response_message() . 'SMTPセッションの開始の送信失敗');
+        $this->smtp_error('SMTPセッションの開始の送信失敗');
         return false;
       }
     }
@@ -391,7 +391,7 @@ class mail_send
     // SMTP-AUTHの開始を送信
     if (false === $this->send_smtp_message('AUTH LOGIN'))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . 'SMTP-AUTHの開始の送信失敗');
+      $this->smtp_error('SMTP-AUTHの開始の送信失敗');
       return false;
     }
     else
@@ -402,7 +402,7 @@ class mail_send
     // SMTP-AUTHユーザー名を送信
     if (false === $this->send_smtp_message(base64_encode($SMTP_USER_NAME)))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . 'SMTP-AUTHユーザー名の送信失敗');
+      $this->smtp_error('SMTP-AUTHユーザー名の送信失敗');
       return false;
     }
     else
@@ -413,7 +413,7 @@ class mail_send
     // SMTP-AUTHパスワードを送信
     if (false === $this->send_smtp_message(base64_encode($SMTP_PASSWORD)))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . 'SMTP-AUTHパスワードの送信失敗');
+      $this->smtp_error('SMTP-AUTHパスワードの送信失敗');
       return false;
     }
     else
@@ -424,7 +424,7 @@ class mail_send
     // 送信元を送信
     if (false === $this->send_smtp_message('MAIL FROM: ' . '<' . $this->get_from() . '>'))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . '送信元の送信失敗');
+      $this->smtp_error('送信元の送信失敗');
       return false;
     }
     else
@@ -435,7 +435,7 @@ class mail_send
     // 宛先を送信
     if (false === $this->send_smtp_message('RCPT TO: ' . '<' . $this->get_to() . '>'))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . '宛先の送信失敗');
+      $this->smtp_error('宛先の送信失敗');
       return false;
     }
     else
@@ -446,7 +446,7 @@ class mail_send
     // データの開始を送信
     if (false === $this->send_smtp_message('DATA'))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . 'データの開始の送信失敗');
+      $this->smtp_error('データの開始の送信失敗');
       return false;
     }
     else
@@ -481,7 +481,7 @@ class mail_send
         $body . self::NEW_LINE .
         '.'))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . 'メール内容の送信失敗');
+      $this->smtp_error('メール内容の送信失敗');
       return false;
     }
     else
@@ -492,7 +492,7 @@ class mail_send
       if (false === ($pos = strpos($smtp_response, '250 ')) || 0 !== $pos)
       {
         // 送信失敗
-        $this->set_smtp_response_message($this->get_smtp_response_message() . 'コンテンツへのメッセージが250以外から始まった');
+        $this->smtp_error('コンテンツへのメッセージが250以外から始まった');
         return false;
       }
     }
@@ -500,7 +500,7 @@ class mail_send
     // SMTPセッションの終了を送信
     if (false === $this->send_smtp_message('QUIT'))
     {
-      $this->set_smtp_response_message($this->get_smtp_response_message() . 'SMTPセッションの終了の送信失敗');
+      $this->smtp_error('SMTPセッションの終了の送信失敗');
       return false;
     }
     else
@@ -509,7 +509,7 @@ class mail_send
     }
 
     // SMTPサーバのソケットを閉じる
-    if (false === fclose($this->get_smtp_connect()))
+    if (false === $this->disconnect_smtp_server())
     {
       $this->set_smtp_response_message($this->get_smtp_response_message() . 'SMTPサーバとのソケット切断失敗');
       return false;
@@ -553,7 +553,7 @@ class mail_send
    */
   private function get_career_name()
   {
-    $mail_address = explode('@', $this->get_to());
+    $mail_address = explode('@', $this->get_from());
     $domain_part = explode('.', $mail_address[1]);
 
     return $domain_part[0];
@@ -581,6 +581,35 @@ class mail_send
   {
     $smtp_response = fgets($this->get_smtp_connect(), 513);
     $this->set_smtp_response_message($this->get_smtp_response_message() . $smtp_message . $smtp_response);
+  }
+
+  /**
+   * SMTPサーバーとのソケット接続を切断する
+   *
+   * @access private
+   * @return bool 切断に成功したらtrue、失敗したらfalse
+   */
+  private function disconnect_smtp_server()
+  {
+    // SMTPサーバへのソケットを閉じる
+    return fclose($this->get_smtp_connect());
+  }
+
+  /**
+   * SMTPサーバーとの接続後～切断前までの何がしかのエラー時の処理
+   *
+   * @access private
+   * @param string エラー内容
+   */
+  private function smtp_error($error_message)
+  {
+    // エラー内容をレスポンスに含める
+    $this->set_smtp_response_message($this->get_smtp_response_message() . $error_message);
+    // ソケット切断に失敗したら、そのエラーもレスポンスに含める
+    if (false === $this->disconnect_smtp_server())
+    {
+      $this->set_smtp_response_message($this->get_smtp_response_message() . "\nSMTPサーバーの切断処理失敗");
+    }
   }
 
   // 改行文字定数(CRLF)
