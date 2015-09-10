@@ -471,7 +471,15 @@ class mail_send
     // 本文
     $body = mb_convert_encoding($this->get_body(), 'JIS');
     // メール内容を送信
-    if (false === $this->send_smtp_message('From: ' . $name_from . ' <' . $this->get_from() . '>' . self::NEW_LINE . 'To: ' . $name_to . ' <' . $this->get_to() . '>' . self::NEW_LINE . 'Cc: ' . $name_cc . ' <' . $this->get_cc() . '>' . self::NEW_LINE . 'Bcc: ' . $name_bcc . ' <' . $this->get_bcc() . '>' . self::NEW_LINE . 'Subject: ' . $subject . self::NEW_LINE . self::NEW_LINE . $body . self::NEW_LINE . '.'))
+    if (false === $this->send_smtp_message(
+        'From: ' . $name_from . ' <' . $this->get_from() . '>' . self::NEW_LINE .
+        'To: ' . $name_to . ' <' . $this->get_to() . '>' . self::NEW_LINE .
+        'Cc: ' . $name_cc . ' <' . $this->get_cc() . '>' . self::NEW_LINE .
+        'Bcc: ' . $name_bcc . ' <' . $this->get_bcc() . '>' . self::NEW_LINE .
+        'Subject: ' . $subject . self::NEW_LINE .
+        self::NEW_LINE .
+        $body . self::NEW_LINE .
+        '.'))
     {
       $this->set_smtp_response_message($this->get_smtp_response_message() . 'メール内容の送信失敗');
       return false;
