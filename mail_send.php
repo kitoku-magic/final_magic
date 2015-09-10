@@ -34,6 +34,10 @@ class mail_send
     $this->name_from = '';
     $this->to = '';
     $this->name_to = '';
+    $this->cc = '';
+    $this->name_cc = '';
+    $this->bcc = '';
+    $this->name_bcc = '';
     $this->subject = '';
     $this->body = '';
   }
@@ -171,6 +175,94 @@ class mail_send
   }
 
   /**
+   * CC先メールアドレス設定
+   *
+   * @access public
+   * @param string $cc CC先メールアドレス
+   */
+  public function set_cc($cc)
+  {
+    $this->cc = $cc;
+  }
+
+  /**
+   * CC先メールアドレス取得
+   *
+   * @access protected
+   * @return string CC先メールアドレス
+   */
+  protected function get_cc()
+  {
+    return $this->cc;
+  }
+
+  /**
+   * CC先の表示名設定
+   *
+   * @access public
+   * @param string $name_cc 送信先の表示名
+   */
+  public function set_name_cc($name_cc)
+  {
+    $this->name_cc = $name_cc;
+  }
+
+  /**
+   * CC先の表示名取得
+   *
+   * @access protected
+   * @return string 送信先の表示名
+   */
+  protected function get_name_cc()
+  {
+    return $this->name_cc;
+  }
+
+  /**
+   * BCC先メールアドレス設定
+   *
+   * @access public
+   * @param string $bcc BCC先メールアドレス
+   */
+  public function set_bcc($bcc)
+  {
+    $this->bcc = $bcc;
+  }
+
+  /**
+   * BCC先メールアドレス取得
+   *
+   * @access protected
+   * @return string BCC先メールアドレス
+   */
+  protected function get_bcc()
+  {
+    return $this->bcc;
+  }
+
+  /**
+   * BCC先の表示名設定
+   *
+   * @access public
+   * @param string $name_bcc 送信先の表示名
+   */
+  public function set_name_bcc($name_bcc)
+  {
+    $this->name_bcc = $name_bcc;
+  }
+
+  /**
+   * BCC先の表示名取得
+   *
+   * @access protected
+   * @return string 送信先の表示名
+   */
+  protected function get_name_bcc()
+  {
+    return $this->name_bcc;
+  }
+
+  /**
    * メールの件名設定
    *
    * @access public
@@ -223,6 +315,13 @@ class mail_send
    */
   public function send_mail($library_path)
   {
+    // メールヘッダ内に不正な文字があるかどうかチェック
+    if ('' !== ($ret = $this->check_mail_header()))
+    {
+      $this->set_smtp_response_message($ret);
+      return false;
+    }
+
     // メアドのドメインパートからキャリア名を取得する
     $career = $this->get_career_name();
     if (true === file_exists($library_path . '/mail_conf_' . $career . '.php'))
@@ -361,6 +460,10 @@ class mail_send
 
     // 宛先の表示名
     $name_to = mb_encode_mimeheader($this->get_name_to());
+    // CC先の表示名
+    $name_cc = mb_encode_mimeheader($this->get_name_cc());
+    // BCC先の表示名
+    $name_bcc = mb_encode_mimeheader($this->get_name_bcc());
     // 送信元の表示名
     $name_from = mb_encode_mimeheader($this->get_name_from());
     // 件名
@@ -368,7 +471,7 @@ class mail_send
     // 本文
     $body = mb_convert_encoding($this->get_body(), 'JIS');
     // メール内容を送信
-    if (false === $this->send_smtp_message('From: ' . $name_from . ' <' . $this->get_from() . '>' . self::NEW_LINE . 'To: ' . $name_to . ' <' . $this->get_to() . '>' . self::NEW_LINE . 'Subject: ' . $subject . self::NEW_LINE . self::NEW_LINE . $body . self::NEW_LINE . '.'))
+    if (false === $this->send_smtp_message('From: ' . $name_from . ' <' . $this->get_from() . '>' . self::NEW_LINE . 'To: ' . $name_to . ' <' . $this->get_to() . '>' . self::NEW_LINE . 'Cc: ' . $name_cc . ' <' . $this->get_cc() . '>' . self::NEW_LINE . 'Bcc: ' . $name_bcc . ' <' . $this->get_bcc() . '>' . self::NEW_LINE . 'Subject: ' . $subject . self::NEW_LINE . self::NEW_LINE . $body . self::NEW_LINE . '.'))
     {
       $this->set_smtp_response_message($this->get_smtp_response_message() . 'メール内容の送信失敗');
       return false;
@@ -405,6 +508,33 @@ class mail_send
     }
 
     return true;
+  }
+
+  /**
+   * メールヘッダに不正な入力値が無いかどうかチェックする
+   *
+   * @access private
+   * @return string チェックが問題無ければ空文字、問題有ればエラーメッセージ
+   */
+  private function check_mail_header()
+  {
+    $method_names = array('name_from', 'from', 'name_to', 'to', 'name_cc', 'cc', 'name_bcc', 'bcc', 'subject');
+    // メールヘッダの各項目を一つずつチェックしていく
+    foreach ($method_names as $method_name)
+    {
+      $full_method_name = 'get_' . $method_name;
+      $val = $this->$full_method_name();
+      if (false !== strpos($val, "\r\n") || false !== strpos($val, "\r") || false !== strpos($val, "\n"))
+      {
+        // 改行コードが含まれているのでエラー
+        return $method_name . 'の中に改行コードが含まれています。値=' . $val;
+      }
+      $full_method_name = 'set_' . $method_name;
+      // ヌルバイトは置換
+      $this->$full_method_name(str_replace("\0", "", $val));
+    }
+
+    return '';
   }
 
   /**
@@ -465,6 +595,18 @@ class mail_send
 
   // 送信先の表示名
   private $name_to;
+
+  // CC先メールアドレス
+  private $cc;
+
+  // CC先の表示名
+  private $name_cc;
+
+  // BCC先メールアドレス
+  private $bcc;
+
+  // BCC先の表示名
+  private $name_bcc;
 
   // メールの件名
   private $subject;
