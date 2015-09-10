@@ -11,19 +11,19 @@ $rows = explode("\n", $contents);
 // 1行ずつ内容を整理していく
 foreach ($rows as $row)
 {
-	$cols = explode(" ", $row);
-	if (7 <= count($cols))
-	{
-		// cols[6]の中にアクセスパスが入っている
-		if (true === array_key_exists($cols[6], $access_details))
-		{
-			$access_details[$cols[6]]++;
-		}
-		else
-		{
-			$access_details[$cols[6]] = 1;
-		}
-	}
+  $cols = explode(" ", $row);
+  if (7 <= count($cols))
+  {
+    // cols[6]の中にアクセスパスが入っている
+    if (true === array_key_exists($cols[6], $access_details))
+    {
+      $access_details[$cols[6]]++;
+    }
+    else
+    {
+      $access_details[$cols[6]] = 1;
+    }
+  }
 }
 
 arsort($access_details);
@@ -32,7 +32,7 @@ $body = '';
 // 本文の内容は「ファイルパス アクセス数」として1行ずつ表示させる
 foreach ($access_details as $file_path => $access_count)
 {
-	$body .= $file_path . ' ' . $access_count . "\n";
+  $body .= $file_path . ' ' . $access_count . "\n";
 }
 
 $ret = null;
