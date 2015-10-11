@@ -107,7 +107,7 @@ class kvs_handle_redis extends kvs_handle
    *
    * @access public
    * @param string $key キー名
-^  * @return mixed キー名に対応した値が存在しなかったらfalseを返す
+   * @return mixed キー名に対応した値が存在しなかったらfalseを返す
    */
   public function get($key)
   {

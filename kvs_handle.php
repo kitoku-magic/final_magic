@@ -51,7 +51,7 @@ abstract class kvs_handle
    *
    * @access public
    * @param string $key キー名
-	 * @return string キー名に対応した値
+   * @return string キー名に対応した値
    */
   abstract public function get($key);
 

@@ -98,7 +98,7 @@ class kvs_handle_memcache extends kvs_handle
    * @param string $key キー名
    * @param callable $cache_cb Read-throughキャッシュコールバック
    * @param float $cas_token CASトークン
-^  * @return mixed キー名に対応した値が存在しなかったらfalseを返す
+   * @return mixed キー名に対応した値が存在しなかったらfalseを返す
    */
   public function get($key, $cache_cb = null, $cas_token = 0.0)
   {
