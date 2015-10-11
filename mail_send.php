@@ -311,7 +311,7 @@ class mail_send
    *
    * @access public
    * @param string $library_path フレームワークが格納されているディレクトリ
-   * @return bool メール送信に成功ならtrue、失敗ならfalse
+   * @return boolean メール送信に成功ならtrue、失敗ならfalse
    */
   public function send_mail($library_path)
   {
@@ -587,7 +587,7 @@ class mail_send
    * SMTPサーバーとのソケット接続を切断する
    *
    * @access private
-   * @return bool 切断に成功したらtrue、失敗したらfalse
+   * @return boolean 切断に成功したらtrue、失敗したらfalse
    */
   private function disconnect_smtp_server()
   {

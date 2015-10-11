@@ -455,7 +455,7 @@ class controller
       // 文字エンコードの確認
       if (false === mb_check_encoding($request, $this->get_config_obj()->search('pg_character_set')))
       {
-        throw new custom_exception('文字コード不正', 1);
+        throw new custom_exception('文字コード不正: 対象文字 = ' . $request, 1);
       }
       // NULLバイト攻撃対策
       // NULLバイト文字を取り除く

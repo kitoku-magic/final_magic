@@ -174,6 +174,7 @@ class db_handle_postgresql extends db_handle
    *
    * @access public
    * @param string $sql 実行するSQL文
+   * @return boolean 設定に成功したらtrue、失敗したらfalse
    */
   public function set_prepare_query($sql)
   {
@@ -181,8 +182,10 @@ class db_handle_postgresql extends db_handle
 
     if (false === $result)
     {
-      throw new custom_exception('プリペアドステートメント設定失敗', 1);
+      return false;
     }
+
+    return true;
   }
 
   /**
@@ -202,17 +205,19 @@ class db_handle_postgresql extends db_handle
    * プリペアドステートメント実行
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function execute_query()
   {
     $res = pg_execute($this->get_conn(), '', $this->get_param_array());
     if (false === $res)
     {
-      throw new custom_exception('SQL実行失敗', 1);
+      return false;
     }
     else
     {
       $this->set_res($res);
+      return true;
     }
   }
 
@@ -293,6 +298,7 @@ class db_handle_postgresql extends db_handle
    * トランザクションの開始
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function begin_transaction()
   {
@@ -300,8 +306,10 @@ class db_handle_postgresql extends db_handle
 
     if (false === $ret)
     {
-      throw new custom_exception('トランザクション開始失敗', 1);
+      return false;
     }
+
+    return true;
   }
 
   /**
@@ -319,6 +327,7 @@ class db_handle_postgresql extends db_handle
    * コミットする
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function commit()
   {
@@ -326,14 +335,17 @@ class db_handle_postgresql extends db_handle
 
     if (false === $ret)
     {
-      throw new custom_exception('コミット失敗', 1);
+      return false;
     }
+
+    return true;
   }
 
   /**
    * ロールバックする
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function rollback()
   {
@@ -341,8 +353,10 @@ class db_handle_postgresql extends db_handle
 
     if (false === $ret)
     {
-      throw new custom_exception('ロールバック失敗', 1);
+      return false;
     }
+
+    return true;
   }
 
   /**

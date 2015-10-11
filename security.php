@@ -68,6 +68,7 @@ class security
    * トークンの値をチェックする(CSRFで使う)
    *
    * @access public
+   * @return boolean チェックがOKならtrue、NGならfalse
    */
   static public function check_token()
   {
@@ -77,13 +78,15 @@ class security
       // hiddenからPOSTされたトークンとセッションIDが違う場合は不正な遷移
       if (0 !== strcmp($_POST['token'], self::get_token()))
       {
-        throw new custom_exception('トークン値相違', 1);
+        return false;
       }
     }
     else
     {
       // hiddenからPOSTされたトークンが未設定時も不正な遷移
-      throw new custom_exception('トークン値未設定', 1);
+      return false;
     }
+
+    return true;
   }
 }

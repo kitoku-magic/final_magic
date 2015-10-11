@@ -128,6 +128,7 @@ class db_handle_mysql extends db_handle
    *
    * @access public
    * @param string $sql 実行するSQL文
+   * @return boolean 設定に成功したらtrue、失敗したらfalse
    */
   public function set_prepare_query($sql)
   {
@@ -135,11 +136,12 @@ class db_handle_mysql extends db_handle
 
     if (false === $stmt)
     {
-      throw new custom_exception('プリペアドステートメント設定失敗', 1);
+      return false;
     }
     else
     {
       $this->set_stmt($stmt);
+      return true;
     }
   }
 
@@ -149,6 +151,7 @@ class db_handle_mysql extends db_handle
    * @access public
    * @param string $variable_type パラメータ変数のデータ型
    * @param array $param_array パラメータのキーと値が格納されている配列
+   * @return boolean バインドに成功したらtrue、失敗したらfalse
    */
   public function set_bind_param($variable_type, $param_array)
   {
@@ -166,14 +169,17 @@ class db_handle_mysql extends db_handle
 
     if (false === $ret)
     {
-      throw new custom_exception('パラメータへのバインド失敗', 1);
+      return false;
     }
+
+    return true;
   }
 
   /**
    * プリペアドステートメント実行
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function execute_query()
   {
@@ -181,8 +187,10 @@ class db_handle_mysql extends db_handle
 
     if (false === $ret)
     {
-      throw new custom_exception('SQL実行失敗', 1);
+      return false;
     }
+
+    return true;
   }
 
   /**
@@ -284,6 +292,7 @@ class db_handle_mysql extends db_handle
    * プリペアドステートメントをクローズ
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function stmt_close()
   {
@@ -291,25 +300,36 @@ class db_handle_mysql extends db_handle
 
     if (false === $ret)
     {
-      throw new custom_exception('ステートメントクローズ失敗', 1);
+      return false;
     }
+
+    return true;
+  }
+
+  /**
+   * 自動コミットの設定
+   *
+   * @access public
+   * @param boolean $auto_commit_flg 自動コミットにするかどうかを表すフラグ
+   * @return boolean 設定に成功したらtrue、失敗したらfalse
+   */
+  public function set_auto_commit($auto_commit_flg)
+  {
+    // 自動コミットの設定
+    return $this->get_conn()->autocommit($auto_commit_flg);
   }
 
   /**
    * トランザクションの開始
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function begin_transaction()
   {
+    // TODO: mysqliのbegin_transactionメソッドは、PHPとMySQLのバージョンの要求が高いので一旦保留
     // 自動コミットの無効化
-    // 優先度低：FALSEは小文字でも良いのでは？
-    $ret = $this->get_conn()->autocommit(FALSE);
-
-    if (false === $ret)
-    {
-      throw new custom_exception('トランザクション開始失敗', 1);
-    }
+    return $this->get_conn()->autocommit(false);
   }
 
   /**
@@ -327,30 +347,22 @@ class db_handle_mysql extends db_handle
    * コミットする
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function commit()
   {
-    $ret = $this->get_conn()->commit();
-
-    if (false === $ret)
-    {
-      throw new custom_exception('コミット失敗', 1);
-    }
+    return $this->get_conn()->commit();
   }
 
   /**
    * ロールバックする
    *
    * @access public
+   * @return boolean 成功したらtrue、失敗したらfalse
    */
   public function rollback()
   {
-    $ret = $this->get_conn()->rollback();
-
-    if (false === $ret)
-    {
-      throw new custom_exception('ロールバック失敗', 1);
-    }
+    return $this->get_conn()->rollback();
   }
 
   /**
