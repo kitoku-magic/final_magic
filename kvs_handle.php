@@ -86,10 +86,10 @@ abstract class kvs_handle
   }
 
   /**
-   * memcache接続オブジェクト設定
+   * KVS接続オブジェクト設定
    *
    * @access public
-   * @param Memcached $conn memcache接続オブジェクト
+   * @param KVS $conn KVS接続オブジェクト
    */
   public function set_conn($conn)
   {
@@ -97,10 +97,10 @@ abstract class kvs_handle
   }
 
   /**
-   * memcache接続オブジェクト取得
+   * KVS接続オブジェクト取得
    *
    * @access public
-   * @return Memcached memcache接続オブジェクト
+   * @return KVS KVS接続オブジェクト
    */
   public function get_conn()
   {
