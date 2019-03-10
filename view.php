@@ -113,7 +113,7 @@ class view
     ob_clean();
 
     // テンプレートファイルを読み込んで出力バッファに保存
-    require_once($this->get_action()->get_template_file_path());
+    require_once($this->get_config()->search('app_base_dir') . '/template/' . $this->get_action()->get_template_file_path());
 
     // 出力バッファの内容を取得
     $this->set_output_html(ob_get_contents());
@@ -140,7 +140,7 @@ class view
    */
   protected function convert_template()
   {
-    if (0 !== strcmp('', $this->get_output_html()))
+    if ('' !== $this->get_output_html())
     {
       // 各状態モードのインスタンスを生成
       $this->get_action()->get_template_convert()->set_template_convert_bool(new template_convert_bool());

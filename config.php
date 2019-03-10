@@ -76,20 +76,20 @@ class config
       $line = trim($line);
 
       // 空行は処理省略
-      if (0 === strcmp('', $line))
+      if ('' === $line)
       {
         continue;
       }
 
       // コメント行も処理省略
       // 優先度低：#の方が良いのでは？
-      if (0 === strcmp('/', $line[0]))
+      if ('/' === $line[0])
       {
         continue;
       }
 
       // 先頭文字が=(nameが存在しない)の場合も処理省略
-      if (0 === strcmp('=', $line[0]))
+      if ('=' === $line[0])
       {
         continue;
       }

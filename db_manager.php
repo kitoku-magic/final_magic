@@ -56,7 +56,7 @@ class db_manager
     if (false === $dbh->connect())
     {
       // 接続失敗
-      throw new custom_exception($dbh->get_error_message(), 1);
+      throw new custom_exception($dbh->get_error_message(), __CLASS__ . ':' . __FUNCTION__);
     }
 
     // パスワード情報の消去

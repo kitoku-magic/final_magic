@@ -38,7 +38,7 @@ class debug_util
     }
     $write_file_name = $write_file_path . 'debug.log';
 
-    file_put_contents($write_file_name, $val . "\n", FILE_APPEND);
+    file_put_contents($write_file_name, $val . PHP_EOL, FILE_APPEND);
   }
 
   /**

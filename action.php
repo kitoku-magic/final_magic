@@ -32,25 +32,12 @@ abstract class action
   protected function init()
   {
     $this->set_config(null);
+    $this->set_form(null);
     $this->set_model(null);
     $this->set_db_handle(null);
     $this->set_template_convert(null);
-    $this->set_template_file_path(null);
+    $this->set_template_file_path('');
   }
-
-  /**
-   * ビジネスロジックを実行する(認証時のみ下記のexecuteメソッドから呼ばれる)
-   *
-   * @access protected
-   */
-  abstract protected function execute_auth();
-
-  /**
-   * HTMLに表示するデータのセット
-   *
-   * @access protected
-   */
-  abstract protected function set_html();
 
   /**
    * 設定ファイルクラスインスタンス設定
@@ -72,6 +59,28 @@ abstract class action
   protected function get_config()
   {
     return $this->config;
+  }
+
+  /**
+   * フォームインスタンス設定
+   *
+   * @access public
+   * @param form $form フォームインスタンス
+   */
+  public function set_form($form)
+  {
+    $this->form = $form;
+  }
+
+  /**
+   * フォームインスタンス取得
+   *
+   * @access public
+   * @return form フォームインスタンス
+   */
+  public function get_form()
+  {
+    return $this->form;
   }
 
   /**
@@ -146,7 +155,7 @@ abstract class action
    * @access protected
    * @param string $template_file_path テンプレートファイルパス
    */
-  protected function set_template_file_path($template_file_path)
+  public function set_template_file_path($template_file_path)
   {
     $this->template_file_path = $template_file_path;
   }
@@ -208,16 +217,34 @@ abstract class action
    * 全てのフォームデータをModelのセッターに設定する
    *
    * @access public
-   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列('_GET','_POST','_COOKIE')
+   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_COOKIE)
    */
   public function set_form_to_model($request_parameter_array)
   {
     foreach ($request_parameter_array as $request_parameter_name)
     {
-      foreach ($$request_parameter_name as $key => $val)
+      foreach ($request_parameter_name as $key => $val)
       {
         // モデルのセッターに値を設定していく
         $this->get_model()->create_accessor_name('set', $key, $val);
+      }
+    }
+  }
+
+  /**
+   * 全てのフォームデータをフォームクラスに設定する
+   *
+   * @access public
+   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_COOKIE)
+   */
+  public function set_form_data($request_parameter_array)
+  {
+    foreach ($request_parameter_array as $request_parameter_name)
+    {
+      foreach ($request_parameter_name as $key => $val)
+      {
+        // フォームのセッターに値を設定していく
+        $this->get_form()->execute_accessor_method('set', $key, $val);
       }
     }
   }
@@ -242,11 +269,36 @@ abstract class action
   }
 
   /**
+   * ビジネスロジックを実行する(認証後に下記のexecuteメソッドから呼ぶ)
+   *
+   * @access protected
+   */
+  protected function execute_auth()
+  {
+  }
+
+  /**
+   * HTMLに表示するデータのセット
+   *
+   * @access protected
+   */
+  protected function set_html()
+  {
+  }
+
+  /**
    * 設定ファイルクラスインスタンス
    *
    * @access private
    */
   private $config;
+
+  /**
+   * フォームインスタンス
+   *
+   * @access private
+   */
+  private $form;
 
   /**
    * モデルインスタンス

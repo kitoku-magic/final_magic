@@ -54,29 +54,29 @@ class security
   }
 
   /**
-   * 第三者が知り得ない秘密情報(トークン)の値を取得する(CSRFで使う)
+   * 第三者が知り得ない秘密情報(CSRFトークン)の値を取得する
    *
    * @access public
    * @return string トークン値
    */
-  static public function get_token()
+  static public function get_csrf_token()
   {
-    return session_id();
+    return hash('sha512', file_get_contents('/dev/urandom', false, null, 0, 128));
   }
 
   /**
-   * トークンの値をチェックする(CSRFで使う)
+   * CSRFトークンの値をチェックする
    *
    * @access public
    * @return boolean チェックがOKならtrue、NGならfalse
    */
-  static public function check_token()
+  static public function check_csrf_token($check_value)
   {
     // トークン確認
-    if (true === isset($_POST['token']))
+    if (true === isset($_POST['csrf_token']))
     {
       // hiddenからPOSTされたトークンとセッションIDが違う場合は不正な遷移
-      if (0 !== strcmp($_POST['token'], self::get_token()))
+      if ($check_value !== $_POST['csrf_token'])
       {
         return false;
       }

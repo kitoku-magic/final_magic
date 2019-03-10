@@ -1,18 +1,5 @@
 <?php
 
-require_once('config.php');
-require_once('custom_exception.php');
-require_once('check.php');
-require_once('model.php');
-require_once('action.php');
-require_once('view.php');
-require_once('db_manager.php');
-require_once('dao.php');
-require_once('utility.php');
-require_once('debug_util.php');
-require_once('security.php');
-require_once('view.php');
-
 /**
  * コントローラークラス
  *
@@ -43,9 +30,10 @@ class controller
   protected function init()
   {
     $this->set_config_obj(new config());
-    $this->set_base_path(null);
-    $this->set_screen(null);
-    $this->set_process(null);
+    $this->set_framework_base_path('');
+    $this->set_base_path('');
+    $this->set_screen('');
+    $this->set_process('');
   }
 
   /**
@@ -93,6 +81,29 @@ class controller
   }
 
   /**
+   * フレームワークベースディレクトリのパス設定
+   *
+   * @access public
+   * @param string $framework_base_path フレームワークベースディレクトリのパス
+   */
+  public function set_framework_base_path($framework_base_path)
+  {
+    $this->framework_base_path = $framework_base_path;
+  }
+
+  /**
+   * フレームワークベースディレクトリのパス取得
+   *
+   * @access protected
+   * @return string フレームワークベースディレクトリのパス
+   */
+  protected function get_framework_base_path()
+  {
+    return $this->framework_base_path;
+  }
+
+
+  /**
    * リクエスト先の画面名設定
    *
    * @access protected
@@ -137,142 +148,152 @@ class controller
   }
 
   /**
-   * 設定ファイルのデータを設定する
-   *
-   * @access public
-   * @param string $file_name 設定ファイル名
-   */
-  public function set_config($file_name)
-  {
-    $this->get_config_obj()->set_base_path($this->get_base_path());
-    $this->get_config_obj()->set_config_data($file_name);
-  }
-
-  /**
    * リクエスト毎に実行される共通処理を行う
    *
    * @access public
+   * @param string $system_config_file_name システム設定ファイル名
    */
-  public function execute()
+  public function execute($system_config_file_name)
   {
-    try
+    //---------
+    // 共通処理
+    //---------
+    // 優先度高：設定ファイルのパースとかリクエストの度に実行する必要がない処理を検討する
+    // 優先度中：以下の処理でコントローラーに書くのが不適切なモノを検討する
+    // 例外ハンドラの設定
+    set_exception_handler(array($this, 'system_exception_handler'));
+    // エラーハンドラの設定
+    set_error_handler(array($this, 'system_error_handler'), E_ALL | E_STRICT);
+    // シャットダウンハンドラの設定
+    register_shutdown_function(array($this, 'system_shutdown_handler'));
+
+    // フレームワーク設定ファイル内をパース
+    $this->get_config_obj()->set_base_path($this->get_base_path());
+    $this->get_config_obj()->set_config_data($this->get_framework_base_path() . '/config/final_magic_config.conf');
+
+    // システム設定ファイル内をパース
+    $this->get_config_obj()->set_config_data($this->get_base_path() . '/config/' . $system_config_file_name);
+
+    // システムのソースディレクトリを設定
+    set_include_path(get_include_path() . PATH_SEPARATOR . $this->get_config_obj()->search('app_base_dir') . '/src');
+
+    // タイムゾーンの設定
+    date_default_timezone_set($this->get_config_obj()->search('time_zone'));
+
+    //---------------
+    // PHP.iniの設定
+    //---------------
+    // mb関数で使用される文字エンコーディング
+    ini_set('mbstring.internal_encoding', $this->get_config_obj()->search('pg_character_set'));
+    // セッションの保存先のディレクトリ
+    ini_set('session.save_path', $this->get_config_obj()->search('session_save_path'));
+    // エントロピーソースとして使用する乱数生成ファイル
+    ini_set('session.entropy_file', '/dev/urandom');
+    // 乱数生成ファイルから読み込むバイト数
+    ini_set('session.entropy_length', '32');
+    // セッションIDのハッシュ化に使うハッシュ関数の種類
+    ini_set('session.hash_function', 'sha512');
+    // セッションIDの保存にCookieを使用するか否か
+    ini_set('session.use_cookies', '1');
+    // セッションIDの保存にCookieのみを使用するか否か
+    ini_set('session.use_only_cookies', '1');
+    // クッキーの有効期限はブラウザが閉じられるまで
+    ini_set('session.cookie_lifetime', '0');
+    // セッションの寿命の分数
+    ini_set('session.cache_expire', '180');
+    // セッションIDをURLに自動で埋め込むか否か
+    ini_set('session.use_trans_sid', '0');
+    // JavaScriptからセッションクッキーにアクセスさせない
+    ini_set('session.cookie_httponly', 'On');
+    // セッションの名前
+    ini_set('session.name', $this->get_config_obj()->search('session_name'));
+
+    // 優先度中：クライアント側のキャッシュを許可するだが、再度検討
+    //session_cache_limiter('private_no_expire');
+
+    // ログイン前にセッション機構を使う為に、認証成功時ではなくここに書く
+    session_start();
+
+    // 全てのリクエストパラメータをチェック
+    // $_REQUEST内のパラメータ値を変更しても
+    // 以下の変数内のパラメータ値に反映されないので、個別にチェックする
+    $_GET = $this->check_request_parameter($_GET);
+    $_POST = $this->check_request_parameter($_POST);
+    $_COOKIE = $this->check_request_parameter($_COOKIE);
+
+    // パラメータから対象画面名を取得
+    $this->set_screen($_GET['screen']);
+    // パラメータから対象処理名を取得
+    $this->set_process($_GET['process']);
+    // URLにパラメータが付加されていない時
+    if (null === $this->get_screen() && null === $this->get_process())
     {
-      //---------
-      // 共通処理
-      //---------
-      // 優先度高：設定ファイルのパースとかリクエストの度に実行する必要がない処理を検討する
-      // 優先度中：以下の処理でコントローラーに書くのが不適切なモノを検討する
-      // エラーハンドラの設定
-      set_error_handler(array($this, 'system_error_handler'));
-      // シャットダウンハンドラの設定
-      register_shutdown_function(array($this, 'system_shutdown_handler'));
-
-      // 設定ファイル内をパース
-      $this->get_config_obj()->set_config_data('../../../final_magic/config/final_magic.conf');
-
-      // タイムゾーンの設定
-      date_default_timezone_set('Asia/Tokyo');
-      //---------------
-      // PHP.iniの設定
-      //---------------
-      // mb関数で使用される文字エンコーディング
-      ini_set('mbstring.internal_encoding', 'UTF-8');
-      // セッションの保存先のディレクトリ
-      ini_set('session.save_path', $this->get_config_obj()->search('session_save_path'));
-      // エントロピーソースとして使用する乱数生成ファイル
-      ini_set('session.entropy_file', '/dev/urandom');
-      // 乱数生成ファイルから読み込むバイト数
-      ini_set('session.entropy_length', '32');
-      // セッションIDのハッシュ化に使うハッシュ関数の種類
-      ini_set('session.hash_function', 'sha512');
-      // セッションIDの保存にCookieを使用するか否か
-      ini_set('session.use_cookies', '1');
-      // セッションIDの保存にCookieのみを使用するか否か
-      ini_set('session.use_only_cookies', '1');
-      // クッキーの有効期限はブラウザが閉じられるまで
-      ini_set('session.cookie_lifetime', '0');
-      // セッションの寿命の分数
-      ini_set('session.cache_expire', '180');
-      // セッションIDをURLに自動で埋め込むか否か
-      ini_set('session.use_trans_sid', '0');
-      // JavaScriptからセッションクッキーにアクセスさせない
-      ini_set('session.cookie_httponly', 'On');
-      // セッションの名前
-      ini_set('session.name', $this->get_config_obj()->search('session_name'));
-
-      // 優先度中：クライアント側のキャッシュを許可するだが、再度検討
-      //session_cache_limiter('private_no_expire');
-
-      // ログイン前にセッション機構を使う為に、認証成功時ではなくここに書く
-      session_start();
-
-      // 全てのリクエストパラメータをチェック
-      // $_REQUEST内のパラメータ値を変更しても
-      // 以下の変数内のパラメータ値に反映されないので、個別にチェックする
-      $_GET = $this->check_request_parameter($_GET);
-      $_POST = $this->check_request_parameter($_POST);
-      $_COOKIE = $this->check_request_parameter($_COOKIE);
-
-      // パラメータから対象画面名を取得
-      $this->set_screen($_GET['screen']);
-      // パラメータから対象処理名を取得
-      $this->set_process($_GET['process']);
-      // URLにパラメータが付加されていない時
-      if (null === $this->get_screen() && null === $this->get_process())
-      {
-        // トップページへアクセス
-        $this->set_screen($this->get_config_obj()->search('app_top_function'));
-        $this->set_process('input');
-      }
-      else
-      {
-        // クラス名の存在チェック
-        if (false === in_array($this->get_screen() . '_' . $this->get_process(), $this->get_config_obj()->search('class_name_list')))
-        {
-          throw new custom_exception('クラス名が存在しません', 1);
-        }
-      }
-
-      // 実行対象のモデルインスタンスの取得
-      $model_obj = $this->get_dispatch_class_obj('model');
-
-      // 実行対象のアクションインスタンスの取得
-      $action_obj = $this->get_dispatch_class_obj('action');
-      $action_obj->set_config($this->get_config_obj());
-      $action_obj->set_model($model_obj);
-      // 全てのフォーム値をモデルに設定
-      $action_obj->set_form_to_model(array('_GET', '_POST', '_COOKIE'));
-      // DBを使う設定の時にはDBハンドルを設定
-      if (0 === strcmp('true', $this->get_config_obj()->search('db_used')))
-      {
-        $action_obj->set_db_handle(db_manager::get_handle($this->get_config_obj()));
-      }
-      $action_obj->set_template_convert(new template_convert());
-
-      // アクションの実行
-      $action_obj->execute();
-
-      $view_obj = new view();
-      $view_obj->set_config($this->get_config_obj());
-      $view_obj->set_action($action_obj);
-      // 画面を表示
-      $view_obj->show_display();
+      // トップページへアクセス
+      $this->set_screen($this->get_config_obj()->search('app_top_function'));
+      $this->set_process('input');
     }
-    catch (custom_exception $e)
+    else
     {
-      //--------------------------------------------------
-      // 後続処理でcatchしてなければ、例外は基本ここに来る
-      //--------------------------------------------------
-      // ログ書き込み
+      // クラス名の存在チェック
+      if (false === in_array($this->get_screen() . '_' . $this->get_process(), $this->get_config_obj()->search('class_name_list')))
+      {
+        throw new custom_exception('クラス名が存在しません', __CLASS__ . ':' . __FUNCTION__);
+      }
+    }
+
+    // 実行対象のフォームインスタンスの取得
+    $form_obj = $this->get_dispatch_class_obj('form');
+
+    // 実行対象のアクションインスタンスの取得
+    $action_obj = $this->get_dispatch_class_obj('action');
+    $action_obj->set_config($this->get_config_obj());
+    $action_obj->set_form($form_obj);
+    // 全てのフォーム値をフォームクラスに設定
+    $action_obj->set_form_data(array($_GET, $_POST, $_COOKIE));
+    // DBを使う設定の時にはDBハンドルを設定
+    if ('true' === $this->get_config_obj()->search('db_used'))
+    {
+      $action_obj->set_db_handle(db_manager::get_handle($this->get_config_obj()));
+    }
+    $action_obj->set_template_convert(new template_convert());
+    $action_obj->set_template_file_path($this->get_screen() . '_' . $this->get_process() . $this->get_config_obj()->search('template_file_extension'));
+
+    // アクションの実行
+    $action_obj->execute();
+
+    $view_obj = new view();
+    $view_obj->set_config($this->get_config_obj());
+    $view_obj->set_action($action_obj);
+    // 画面を表示
+    $view_obj->show_display();
+  }
+
+  /**
+   * 例外発生時の共通処理
+   *
+   * @access public
+   * @param Exception $e 発生した例外クラスインスタンス
+   */
+  public function system_exception_handler(Exception $e)
+  {
+    $message = $e->getMessage();
+    if ($e instanceof custom_exception)
+    {
+      $message = $e->get_message();
       $e->set_config($this->get_config_obj());
       $e->write_log();
+    }
+    // display_errorsの値によって処理を変更する
+    if ('1' === ini_get('display_errors')) {
+      echo '<pre>' . $message . '</pre>';
+    } else {
       // エラー画面にリダイレクト
       $this->redirect_location('303 See Other', 'error.html');
     }
   }
 
   /**
-   * エラー発生時の共通処理(Warningエラー等の発生時はこっち)
+   * エラー発生時の共通処理
    *
    * @access public
    * @param int $errno エラーのレベル
@@ -283,56 +304,23 @@ class controller
    */
   public function system_error_handler($errno, $errstr, $errfile, $errline, $errcontext)
   {
-    $e = new custom_exception($errstr, $errno);
-
-    if (8 !== $e->getCode())
-    {
-      // NOTICEエラー以外は例外を投げる
-      throw $e;
-    }
-    else
-    {
-      // NOTICEエラー時はログ書き込みのみ行う
-      $e->set_config($this->get_config_obj());
-      $e->write_log();
-    }
+    // 例外ハンドラを呼び出す
+    $this->system_exception_handler(new custom_exception($errstr, __CLASS__ . ':' . __FUNCTION__, $errno, $errfile, $errline));
   }
 
   /**
-   * エラー発生時の共通処理(Fatalエラー等の発生時はこっち)(優先度高：ここでも捕まえられないエラーはどうしましょ)
+   * スクリプト終了時の共通処理
    *
    * @access public
    */
   public function system_shutdown_handler()
   {
-    // catch出来ないエラーかどうか
-    $isError = false;
-
     // 最後に発生したエラーを取得
-    if ($error = error_get_last())
+    $error = error_get_last();
+    if (null !== $error)
     {
-      // エラータイプの判断
-      // 以下のエラーはcatch出来ない
-      // 優先度中：switchで判断して問題ないか？文字列は入らないか？
-      switch ($error['type'])
-      {
-        case E_ERROR:
-        case E_PARSE:
-        case E_CORE_ERROR:
-        case E_CORE_WARNING:
-        case E_COMPILE_ERROR:
-        case E_COMPILE_WARNING:
-          $isError = true;
-          break;
-      }
-    }
-
-    // catch出来ないエラーの場合はログに書き込む
-    if ($isError)
-    {
-      $e = new custom_exception($error['message'], $error['type']);
-      $e->set_config($this->get_config_obj());
-      $e->write_log();
+      // エラーが発生していた場合は例外ハンドラを呼び出す
+      $this->system_exception_handler(new custom_exception($error['message'], __CLASS__ . ':' . __FUNCTION__, $error['type'], $error['file'], $error['line']));
     }
   }
 
@@ -340,7 +328,7 @@ class controller
    * 実行対象のクラスを設定する
    *
    * @access protected
-   * @param string $class_type クラスの種類(actionかmodel)
+   * @param string $class_type クラスの種類(actionかform)
    * @return object 実行対象のクラスインスタンス
    */
   protected function get_dispatch_class_obj($class_type)
@@ -358,7 +346,7 @@ class controller
     }
     else
     {
-      throw new custom_exception($class_type . 'の読み込み不可', 1);
+      throw new custom_exception($class_type . 'の読み込み不可', __CLASS__ . ':' . __FUNCTION__);
     }
 
     // 実行対象クラスの存在チェック
@@ -369,7 +357,7 @@ class controller
     }
     else
     {
-      throw new custom_exception($class_type . 'インスタンスの生成不可', 1);
+      throw new custom_exception($class_type . 'インスタンスの生成不可', __CLASS__ . ':' . __FUNCTION__);
     }
 
     return $class_obj;
@@ -379,19 +367,19 @@ class controller
    * 読み込むクラスファイルのパスを生成する
    *
    * @access protected
-   * @param string $class_type クラスの種類(actionかmodel)
+   * @param string $class_type クラスの種類(actionかform)
    * @return string クラスファイルが置いてあるパス
    */
   protected function create_class_file_path($class_type)
   {
     $scr = $this->get_screen();
     // 生成するクラスファイルのパス
-    $class_file_path = $this->get_base_path() . 'program/' . $scr . '/' . $scr . '_';
+    $class_file_path = $this->get_base_path() . '/src/' . $scr . '/' . $scr . '_';
 
-    // モデルか否かの判断
-    if (0 === strcmp('model', $class_type))
+    // フォームか否かの判断
+    if ('form' === $class_type)
     {
-      // モデル
+      // フォーム
       $class_file_path .= $class_type . '.php';
     }
     else
@@ -407,7 +395,7 @@ class controller
    * クラス名を生成する
    *
    * @access protected
-   * @param string $class_type クラスの種類(actionかmodel)
+   * @param string $class_type クラスの種類(actionかform)
    * @return string クラス名
    */
   protected function create_class_name($class_type)
@@ -415,10 +403,10 @@ class controller
     // 生成するクラス名
     $class_name = $this->get_screen() . '_';
 
-    // モデルか否かの判断
-    if (0 === strcmp('model', $class_type))
+    // フォームか否かの判断
+    if ('form' === $class_type)
     {
-      // モデル
+      // フォーム
       $class_name .= $class_type;
     }
     else
@@ -455,7 +443,7 @@ class controller
       // 文字エンコードの確認
       if (false === mb_check_encoding($request, $this->get_config_obj()->search('pg_character_set')))
       {
-        throw new custom_exception('文字コード不正: 対象文字 = ' . $request, 1);
+        throw new custom_exception('文字コード不正: 対象文字 = ' . $request, __CLASS__ . ':' . __FUNCTION__);
       }
       // NULLバイト攻撃対策
       // NULLバイト文字を取り除く
@@ -499,12 +487,12 @@ class controller
    *
    * @access protected
    * @param string $http_status HTTPステータスコードと文字列(303 See Otherなど)
-   * @param string $file_path_from_app_root アプリケーションベースディレクトリからのパスとファイル名
+   * @param string $path_from_document_root ドキュメントルートからのパスとファイル名
    */
-  protected function redirect_location($http_status, $path_from_app_root)
+  protected function redirect_location($http_status, $path_from_document_root)
   {
     // URIを生成
-    $uri = 'http://' . $this->get_config_obj()->search('host_name') . DIRECTORY_SEPARATOR . $path_from_app_root;
+    $uri = 'http://' . $this->get_config_obj()->search('host_name') . DIRECTORY_SEPARATOR . $path_from_document_root;
     // ステータスコードを発行
     header('HTTP/1.1 ' . $http_status);
     // リダイレクトを発行
@@ -518,6 +506,13 @@ class controller
    * @access private
    */
   private $config_obj;
+
+  /**
+   * フレームワークベースディレクトリのパス
+   *
+   * @access private
+   */
+  private $framework_base_path;
 
   /**
    * アプリケーションベースディレクトリのパス

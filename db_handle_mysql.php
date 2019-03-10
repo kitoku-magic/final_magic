@@ -92,7 +92,14 @@ class db_handle_mysql extends db_handle
     if (true === is_null($this->get_conn()))
     {
       // DB接続
-      $conn = new mysqli($this->get_host_name(), $this->get_user_name(), $this->get_password(), $this->get_database_name(), $this->get_port_number());
+      $conn = new mysqli(
+        $this->get_host_name(),
+        $this->get_user_name(),
+        $this->get_password(),
+        $this->get_database_name(),
+        $this->get_port_number(),
+        $this->get_config()->search('db_socket_file_path')
+      );
       if ($conn_error = mysqli_connect_error())
       {
         // DB接続失敗
