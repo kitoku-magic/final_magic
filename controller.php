@@ -253,7 +253,7 @@ class controller
     // DBを使う設定の時にはDBハンドルを設定
     if ('true' === $this->get_config_obj()->search('db_used'))
     {
-      $action_obj->set_db_handle(db_manager::get_handle($this->get_config_obj()));
+      $action_obj->set_storage_handlers(db_manager::get_storage_handlers($this->get_config_obj()));
     }
     $action_obj->set_template_convert(new template_convert());
     $action_obj->set_template_file_path($this->get_screen() . '_' . $this->get_process() . $this->get_config_obj()->search('template_file_extension'));
@@ -374,7 +374,7 @@ class controller
   {
     $scr = $this->get_screen();
     // 生成するクラスファイルのパス
-    $class_file_path = $this->get_base_path() . '/src/' . $scr . '/' . $scr . '_';
+    $class_file_path = $this->get_base_path() . '/src/' . $class_type . '/' . $scr . '/' . $scr . '_';
 
     // フォームか否かの判断
     if ('form' === $class_type)

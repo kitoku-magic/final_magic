@@ -52,7 +52,16 @@ class template_convert_bool
             // 置換対象文字列で分割した配列
             $data_array = explode(';;;', $body_buf);
             // 置換するデータ
-            $data_val = $data[$i][$data_array[1]];
+            if ($data[$i] instanceof entity)
+            {
+              // Entityの場合はgetter実行
+              $getter_name = 'get_' . $data_array[1];
+              $data_val = $data[$i]->$getter_name();
+            }
+            else
+            {
+              $data_val = $data[$i][$data_array[1]];
+            }
             // 最初に見つかった置換対象文字列の直後からの文字列
             $data_after = mb_substr(mb_strstr(mb_substr(mb_strstr($body_buf, ';;;'), 3), ';;;'), 3);
             // 1ヶ所の置換が終了したので、文字列をくっつけていく

@@ -49,12 +49,12 @@ class config
    *
    * @access public
    * @param string $name 設定値のキー
-   * @return string 設定値
+   * @return string 設定値（存在しなければnull）
    */
   public function search($name)
   {
     // nameがキーになっている値を返す
-    return $this->list[$name];
+    return isset($this->list[$name]) ? $this->list[$name] : null;
   }
 
   /**

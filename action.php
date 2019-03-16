@@ -34,7 +34,7 @@ abstract class action
     $this->set_config(null);
     $this->set_form(null);
     $this->set_model(null);
-    $this->set_db_handle(null);
+    $this->set_storage_handlers(array());
     $this->set_template_convert(null);
     $this->set_template_file_path('');
   }
@@ -106,25 +106,25 @@ abstract class action
   }
 
   /**
-   * DBハンドル設定
+   * ストレージハンドラー配列設定
    *
    * @access public
-   * @param db_handle $db_handle DBハンドルクラスインスタンス
+   * @param array $storage_handlers ストレージハンドラー配列
    */
-  public function set_db_handle($db_handle)
+  public function set_storage_handlers(array $storage_handlers)
   {
-    $this->db_handle = $db_handle;
+    $this->storage_handlers = $storage_handlers;
   }
 
   /**
-   * DBハンドル取得
+   * ストレージハンドラー配列取得
    *
    * @access public
-   * @return db_handle DBハンドルクラスインスタンス
+   * @return array ストレージハンドラー配列
    */
-  public function get_db_handle()
+  public function get_storage_handlers()
   {
-    return $this->db_handle;
+    return $this->storage_handlers;
   }
 
   /**
@@ -308,11 +308,11 @@ abstract class action
   private $model;
 
   /**
-   * DBハンドルインスタンス
+   * ストレージハンドラー配列
    *
    * @access private
    */
-  private $db_handle;
+  private $storage_handlers;
 
   /**
    * テンプレート置換処理インスタンス
