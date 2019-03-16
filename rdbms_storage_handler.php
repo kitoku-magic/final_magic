@@ -119,8 +119,8 @@ abstract class rdbms_storage_handler implements storage_handler
    * コンストラクタ
    */
   public function __construct()
-	{
-		$this->where = array();
+  {
+    $this->where = array();
     $this->entities = array();
   }
 
