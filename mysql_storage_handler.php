@@ -35,6 +35,7 @@ class mysql_storage_handler extends rdbms_storage_handler
   {
     if (null === $this->get_connection())
     {
+      $config = config::get_instance();
       // DB接続
       $connection = new mysqli(
         $this->get_host_name(),
@@ -42,7 +43,7 @@ class mysql_storage_handler extends rdbms_storage_handler
         $this->get_password(),
         $this->get_database_name(),
         $this->get_port_number(),
-        $this->get_config()->search('db_socket_file_path')
+        $config->search('db_socket_file_path')
       );
       if (null !== $connection->connect_error)
       {
@@ -55,7 +56,7 @@ class mysql_storage_handler extends rdbms_storage_handler
       $this->set_connection($connection);
 
       // 文字コード設定
-      $this->get_connection()->set_charset($this->get_config()->search('db_character_set'));
+      $this->get_connection()->set_charset($config->search('db_character_set'));
     }
 
     return true;
@@ -70,6 +71,8 @@ class mysql_storage_handler extends rdbms_storage_handler
   public function fetch($mode)
   {
     $result = null;
+
+    $config = config::get_instance();
 
     $result_set = $this->get_result_set();
 
@@ -87,6 +90,7 @@ class mysql_storage_handler extends rdbms_storage_handler
       {
         if ($statement->fetch())
         {
+          require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
           $entity = new $entity_class_name;
           foreach ($result_set['data'] as $column_name => $column_value)
           {
@@ -108,6 +112,7 @@ class mysql_storage_handler extends rdbms_storage_handler
       {
         while ($statement->fetch())
         {
+          require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
           $entity = new $entity_class_name;
           foreach ($result_set['data'] as $column_name => $column_value)
           {

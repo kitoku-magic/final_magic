@@ -13,7 +13,6 @@ require_once('template_convert.php');
  */
 abstract class action
 {
-
   /**
    * コンストラクタ
    *
@@ -31,34 +30,11 @@ abstract class action
    */
   protected function init()
   {
-    $this->set_config(null);
     $this->set_form(null);
     $this->set_model(null);
     $this->set_storage_handlers(array());
     $this->set_template_convert(null);
     $this->set_template_file_path('');
-  }
-
-  /**
-   * 設定ファイルクラスインスタンス設定
-   *
-   * @access public
-   * @param config $config 設定ファイルクラスインスタンス
-   */
-  public function set_config($config)
-  {
-    $this->config = $config;
-  }
-
-  /**
-   * 設定ファイルクラスインスタンス取得
-   *
-   * @access protected
-   * @return config 設定ファイルクラスインスタンス
-   */
-  protected function get_config()
-  {
-    return $this->config;
   }
 
   /**
@@ -152,7 +128,7 @@ abstract class action
   /**
    * テンプレートファイルパス設定
    *
-   * @access protected
+   * @access public
    * @param string $template_file_path テンプレートファイルパス
    */
   public function set_template_file_path($template_file_path)
@@ -179,6 +155,11 @@ abstract class action
    */
   public function execute()
   {
+    // 優先度中：クライアント側のキャッシュを許可するだが、再度検討
+    //session_cache_limiter('private_no_expire');
+
+    session_start();
+
     // ユーザーの認証セッションの場合、定期的にセッションIDを切り替える
     // セッションIDの更新処理
     if (true === isset($_SESSION['auth_login_id']))
@@ -239,12 +220,27 @@ abstract class action
    */
   public function set_form_data($request_parameter_array)
   {
-    foreach ($request_parameter_array as $request_parameter_name)
+    $form = $this->get_form();
+    $properties = $form->get_all_properties();
+    foreach ($properties as $field => $value)
     {
-      foreach ($request_parameter_name as $key => $val)
+      $is_exists = false;
+      foreach ($request_parameter_array as $request_parameter_name)
       {
-        // フォームのセッターに値を設定していく
-        $this->get_form()->execute_accessor_method('set', $key, $val);
+        foreach ($request_parameter_name as $key => $val)
+        {
+          if ($field === $key)
+          {
+            $is_exists = true;
+            // フォームのセッターに値を設定していく
+            $form->execute_accessor_method('set', $key, $val);
+            break 2;
+          }
+        }
+      }
+      if (false === $is_exists)
+      {
+        $form->execute_accessor_method('set', $field, null);
       }
     }
   }
@@ -285,13 +281,6 @@ abstract class action
   protected function set_html()
   {
   }
-
-  /**
-   * 設定ファイルクラスインスタンス
-   *
-   * @access private
-   */
-  private $config;
 
   /**
    * フォームインスタンス

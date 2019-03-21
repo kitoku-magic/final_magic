@@ -90,6 +90,21 @@ class utility
   }
 
   /**
+   * 全角スペース対応trim
+   *
+   * 標準のtrim関数の文字に加え全角スペースもtrimする
+   *
+   * @access public
+   * @param string $value trimしたい値
+   * @param string $character_mask_pattern trimする対象の文字の正規表現パターン
+   * @return string trim後の値
+   */
+  static public function mb_trim($value, $character_mask_pattern = '(\x20|\x09|\x0a|\x0d|\x00|\x0b|　)')
+  {
+    return preg_replace('/\A' . $character_mask_pattern . '++|' . $character_mask_pattern . '++\z/u', '', $value);
+  }
+
+  /**
    * バブルソートを行う
    *
    * @access public

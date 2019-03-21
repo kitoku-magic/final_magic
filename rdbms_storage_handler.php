@@ -120,18 +120,22 @@ abstract class rdbms_storage_handler implements storage_handler
    */
   public function __construct()
   {
+    $this->init();
+  }
+
+  public function init()
+  {
+    $this->primary_keys = array();
+    $this->table_name = '';
+    $this->is_column_unique = false;
+    $this->columns = array();
+    $this->main_table_name = '';
+    $this->join = array();
     $this->where = array();
+    $this->values = array();
+    $this->bind_types = array();
+    $this->bind_params = array();
     $this->entities = array();
-  }
-
-  public function set_config($config)
-  {
-    $this->config = $config;
-  }
-
-  public function get_config()
-  {
-    return $this->config;
   }
 
   public function set_user_name($user_name)
@@ -247,9 +251,16 @@ abstract class rdbms_storage_handler implements storage_handler
       $result = '';
       foreach ($columns as $column)
       {
-        // 複数のテーブル間で同じ項目だった時の為に、別名にしている
-        $full_column_name = $sql_escape_character . $column[0] . $sql_escape_character . '.' . $sql_escape_character . $column[1] . $sql_escape_character;
-        $result .= $full_column_name . ' AS \'' . $column[0] . '.' . $column[1] . '\', ';
+        if (true === $this->get_is_column_unique())
+        {
+          // 複数のテーブル間で同じ項目だった時の為に、別名にしている
+          $full_column_name = $sql_escape_character . $column[0] . $sql_escape_character . '.' . $sql_escape_character . $column[1] . $sql_escape_character;
+          $result .= $full_column_name . ' AS \'' . $column[0] . '.' . $column[1] . '\', ';
+        }
+        else
+        {
+          $result .= $sql_escape_character . $column . $sql_escape_character . ', ';
+        }
       }
       $this->columns = rtrim($result, ', ');
     }
@@ -642,15 +653,16 @@ abstract class rdbms_storage_handler implements storage_handler
         $entity_created = true;
       }
     }
+    $config = config::get_instance();
     if (false === $entity_created)
     {
-      require_once $this->get_config()->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
+      require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
       $main_entity = new $entity_class_name;
     }
     // 関連しているエンティティへの、データの設定
     foreach ($associated_entities as $associated_idx => $associated_entity_class_name)
     {
-      require_once $this->get_config()->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $associated_entity_class_name . '.php';
+      require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $associated_entity_class_name . '.php';
       $associated_entity_class = new $associated_entity_class_name;
       $associated_table_meta_data = $this->get_table_meta_data($associated_tables[$associated_idx]);
       foreach ($data as $column_name => $column_value)
@@ -680,13 +692,6 @@ abstract class rdbms_storage_handler implements storage_handler
 
     $this->set_main_entity($main_entity);
   }
-
-  /**
-   * 設定ファイルクラスインスタンス
-   *
-   * @access private
-   */
-  private $config;
 
   /**
    * ユーザー名

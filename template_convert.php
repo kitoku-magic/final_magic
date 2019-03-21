@@ -33,7 +33,7 @@ class template_convert
    * @access protected
    * @return array 単一値格納用の配列
    */
-  protected function get_single_array()
+  public function get_single_array()
   {
     return $this->single_array;
   }
@@ -67,7 +67,7 @@ class template_convert
    * @access protected
    * @return array 複数値格納用の配列
    */
-  protected function get_multi_array()
+  public function get_multi_array()
   {
     return $this->multi_array;
   }
@@ -169,7 +169,7 @@ class template_convert
    * @access protected
    * @return array 論理値格納用の配列
    */
-  protected function get_bool_array()
+  public function get_bool_array()
   {
     return $this->bool_array;
   }
@@ -253,29 +253,25 @@ class template_convert
   }
 
   /**
-   * 単一値の割り当て(HTMLエスケープ有)
+   * 単一値の割り当て
    *
    * @access public
    * @param string $key 単一値のキー名
    * @param mixed $val 単一値
+   * @param bool $is_html_escape HTMLエスケープを行うか否か
+   * @param bool $is_template_delimiter_escape テンプレート置換用のエスケープを行うか否か
    */
-  public function assign_single_array($key, $val)
+  public function assign_single_array($key, $val, $is_html_escape = true, $is_template_delimiter_escape = true)
   {
-    // テンプレートの置換用に区切り文字のエスケープも同時に行う
-    $this->single_array[$key] = $this->escape_delimiter_in_html_template(security::html_escape($val));
-  }
-
-  /**
-   * 単一値の割り当て(HTMLエスケープ無しなので、取扱いは慎重に！)
-   *
-   * @access public
-   * @param string $key 単一値のキー名
-   * @param mixed $val 単一値
-   */
-  public function assign_single_array_no_escape($key, $val)
-  {
-    // テンプレートの置換用に区切り文字のエスケープも同時に行う
-    $this->single_array[$key] = $this->escape_delimiter_in_html_template($val);
+    if (true === $is_html_escape)
+    {
+      $val = security::html_escape($val);
+    }
+    if (true === $is_template_delimiter_escape)
+    {
+      $val = $this->escape_delimiter_in_html_template($val);
+    }
+    $this->single_array[$key] = $val;
   }
 
   /**
@@ -286,11 +282,20 @@ class template_convert
    * @param mixed $val 複数値
    * @param string $yes 選択する項目のタグに設定する文字列(selected="selected"など)
    * @param string $no 選択しない項目のタグに設定する文字列(基本空文字'')
+   * @param bool $is_html_escape HTMLエスケープを行うか否か
+   * @param bool $is_template_delimiter_escape テンプレート置換用のエスケープを行うか否か
    */
-  public function assign_multi_array($key, $val, $yes, $no)
+  public function assign_multi_array($key, $val, $yes, $no, $is_html_escape = true, $is_template_delimiter_escape = true)
   {
-    // テンプレートの置換用に区切り文字のエスケープも同時に行う
-    $this->multi_array[$key] = $this->escape_delimiter_in_html_template(security::html_escape($val));
+    if (true === $is_html_escape)
+    {
+      $val = security::html_escape($val);
+    }
+    if (true === $is_template_delimiter_escape)
+    {
+      $val = $this->escape_delimiter_in_html_template($val);
+    }
+    $this->multi_array[$key] = $val;
     $this->multi_array_yes[$key] = $yes;
     $this->multi_array_no[$key] = $no;
   }
@@ -301,8 +306,10 @@ class template_convert
    * @access public
    * @param string $key 論理値のキー名
    * @param mixed $obj 単一の論理値の場合はboolean、複数の論理値(ループ)の場合はarray
+   * @param bool $is_html_escape HTMLエスケープを行うか否か
+   * @param bool $is_template_delimiter_escape テンプレート置換用のエスケープを行うか否か
    */
-  public function assign_bool_array($key, $obj = true)
+  public function assign_bool_array($key, $obj = true, $is_html_escape = true, $is_template_delimiter_escape = true)
   {
     if (true === is_array($obj))
     {
@@ -314,8 +321,14 @@ class template_convert
       {
         foreach ($obj[$i] as $array_key => $array_val)
         {
-          // テンプレートの置換用に区切り文字のエスケープも同時に行う
-          $array_val = $this->escape_delimiter_in_html_template(security::html_escape($array_val));
+          if (true === $is_html_escape)
+          {
+            $array_val = security::html_escape($array_val);
+          }
+          if (true === $is_template_delimiter_escape)
+          {
+            $array_val = $this->escape_delimiter_in_html_template($array_val);
+          }
           $obj[$i][$array_key] = $array_val;
         }
         $tmp[] = $obj[$i];

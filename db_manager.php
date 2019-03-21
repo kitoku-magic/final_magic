@@ -15,20 +15,20 @@ class db_manager
    * 対象のDB内のハンドラーを全て取得する
    *
    * @access public
-   * @param config $config 設定ファイルクラスインスタンス
    * @return array DBのストレージハンドラークラスインスタンス配列
    */
-  public static function get_storage_handlers(config $config)
+  public static function get_storage_handlers()
   {
+    $config = config::get_instance();
     $db_handlers = array();
     // マスターへのDBハンドルを取得
-    $db_handlers['master'] = self::get_storage_handle($config, $config->search('db_host_master'));
+    $db_handlers['master'] = self::get_storage_handle($config->search('db_host_master'));
     // スレーブへのDBハンドルを取得（複数あるスレーブサーバーの内、一つをランダムで選択）
     $slave_number = mt_rand(1, $config->search('db_host_slave_count'));
     $db_host_slave = $config->search('db_host_slave' . $slave_number);
     if (null !== $db_host_slave)
     {
-      $db_handlers['slave'] = self::get_storage_handle($config, $db_host_slave);
+      $db_handlers['slave'] = self::get_storage_handle($db_host_slave);
     }
     else
     {
@@ -41,12 +41,12 @@ class db_manager
   /**
    * DB内のハンドラーを一つ取得する
    *
-   * @param config $config 設定ファイルクラスインスタンス
    * @param string DBホスト名
    * @return storage_handler DBストレージハンドラークラスインスタンス
    */
-  private static function get_storage_handle(config $config, $db_host_name)
+  private static function get_storage_handle($db_host_name)
   {
+    $config = config::get_instance();
     // DBハンドルクラスインスタンス
     $dbh = null;
 
@@ -62,7 +62,6 @@ class db_manager
     }
 
     // DB接続情報を設定
-    $dbh->set_config($config);
     $dbh->set_user_name($config->search('db_user'));
     $dbh->set_password($config->search('db_password'));
     $dbh->set_database_name($config->search('db_name'));

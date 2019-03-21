@@ -11,7 +11,6 @@
  */
 class controller
 {
-
   /**
    * コンストラクタ
    *
@@ -29,33 +28,11 @@ class controller
    */
   protected function init()
   {
-    $this->set_config_obj(new config());
     $this->set_framework_base_path('');
     $this->set_base_path('');
     $this->set_screen('');
     $this->set_process('');
-  }
-
-  /**
-   * 設定ファイルクラスインスタンス設定
-   *
-   * @access protected
-   * @param config $config_obj 設定ファイルクラスインスタンス
-   */
-  protected function set_config_obj($config_obj)
-  {
-    $this->config_obj = $config_obj;
-  }
-
-  /**
-   * 設定ファイルクラスインスタンス取得
-   *
-   * @access protected
-   * @return config 設定ファイルクラスインスタンス
-   */
-  protected function get_config_obj()
-  {
-    return $this->config_obj;
+    $this->set_is_ajax(false);
   }
 
   /**
@@ -148,6 +125,28 @@ class controller
   }
 
   /**
+   * Ajaxリクエストか否かを設定
+   *
+   * @access protected
+   * @param bool $is_ajax Ajaxリクエストか否か
+   */
+  protected function set_is_ajax($is_ajax)
+  {
+    $this->is_ajax = $is_ajax;
+  }
+
+  /**
+   * Ajaxリクエストか否かを取得
+   *
+   * @access protected
+   * @return bool Ajaxリクエストか否か
+   */
+  protected function get_is_ajax()
+  {
+    return $this->is_ajax;
+  }
+
+  /**
    * リクエスト毎に実行される共通処理を行う
    *
    * @access public
@@ -168,25 +167,26 @@ class controller
     register_shutdown_function(array($this, 'system_shutdown_handler'));
 
     // フレームワーク設定ファイル内をパース
-    $this->get_config_obj()->set_base_path($this->get_base_path());
-    $this->get_config_obj()->set_config_data($this->get_framework_base_path() . '/config/final_magic_config.conf');
+    $config = config::get_instance();
+    $config->set_base_path($this->get_base_path());
+    $config->set_config_data($this->get_framework_base_path() . '/config/final_magic_config.conf');
 
     // システム設定ファイル内をパース
-    $this->get_config_obj()->set_config_data($this->get_base_path() . '/config/' . $system_config_file_name);
+    $config->set_config_data($this->get_base_path() . '/config/' . $system_config_file_name);
 
     // システムのソースディレクトリを設定
-    set_include_path(get_include_path() . PATH_SEPARATOR . $this->get_config_obj()->search('app_base_dir') . '/src');
+    set_include_path(get_include_path() . PATH_SEPARATOR . $config->search('app_base_dir') . '/src');
 
     // タイムゾーンの設定
-    date_default_timezone_set($this->get_config_obj()->search('time_zone'));
+    date_default_timezone_set($config->search('time_zone'));
 
     //---------------
     // PHP.iniの設定
     //---------------
     // mb関数で使用される文字エンコーディング
-    ini_set('mbstring.internal_encoding', $this->get_config_obj()->search('pg_character_set'));
+    ini_set('mbstring.internal_encoding', $config->search('pg_character_set'));
     // セッションの保存先のディレクトリ
-    ini_set('session.save_path', $this->get_config_obj()->search('session_save_path'));
+    ini_set('session.save_path', $config->search('session_save_path'));
     // エントロピーソースとして使用する乱数生成ファイル
     ini_set('session.entropy_file', '/dev/urandom');
     // 乱数生成ファイルから読み込むバイト数
@@ -206,13 +206,7 @@ class controller
     // JavaScriptからセッションクッキーにアクセスさせない
     ini_set('session.cookie_httponly', 'On');
     // セッションの名前
-    ini_set('session.name', $this->get_config_obj()->search('session_name'));
-
-    // 優先度中：クライアント側のキャッシュを許可するだが、再度検討
-    //session_cache_limiter('private_no_expire');
-
-    // ログイン前にセッション機構を使う為に、認証成功時ではなくここに書く
-    session_start();
+    ini_set('session.name', $config->search('session_name'));
 
     // 全てのリクエストパラメータをチェック
     // $_REQUEST内のパラメータ値を変更しても
@@ -229,43 +223,61 @@ class controller
     if (null === $this->get_screen() && null === $this->get_process())
     {
       // トップページへアクセス
-      $this->set_screen($this->get_config_obj()->search('app_top_function'));
+      $this->set_screen($config->search('app_top_function'));
       $this->set_process('input');
     }
     else
     {
       // クラス名の存在チェック
-      if (false === in_array($this->get_screen() . '_' . $this->get_process(), $this->get_config_obj()->search('class_name_list')))
+      if (false === in_array($this->get_screen() . '_' . $this->get_process(), $config->search('class_name_list'), true))
       {
         throw new custom_exception('クラス名が存在しません', __CLASS__ . ':' . __FUNCTION__);
       }
     }
 
+    // Ajaxリクエストか否かを判定して設定
+    // クラス名の存在チェック
+    if (true === in_array($this->get_screen() . '_' . $this->get_process(), $config->search('ajax_action_class_name_list'), true))
+    {
+      if (true === isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+        'fm_xml_http_request' === $_SERVER['HTTP_X_REQUESTED_WITH'])
+      {
+        $this->set_is_ajax(true);
+      }
+    }
+
     // 実行対象のフォームインスタンスの取得
     $form_obj = $this->get_dispatch_class_obj('form');
-
     // 実行対象のアクションインスタンスの取得
     $action_obj = $this->get_dispatch_class_obj('action');
-    $action_obj->set_config($this->get_config_obj());
     $action_obj->set_form($form_obj);
     // 全てのフォーム値をフォームクラスに設定
     $action_obj->set_form_data(array($_GET, $_POST, $_COOKIE));
+
     // DBを使う設定の時にはDBハンドルを設定
-    if ('true' === $this->get_config_obj()->search('db_used'))
+    if ('true' === $config->search('db_used'))
     {
-      $action_obj->set_storage_handlers(db_manager::get_storage_handlers($this->get_config_obj()));
+      $action_obj->set_storage_handlers(db_manager::get_storage_handlers());
     }
     $action_obj->set_template_convert(new template_convert());
-    $action_obj->set_template_file_path($this->get_screen() . '_' . $this->get_process() . $this->get_config_obj()->search('template_file_extension'));
+    $action_obj->set_template_file_path($this->get_screen() . '_' . $this->get_process() . $config->search('template_file_extension'));
 
     // アクションの実行
     $action_obj->execute();
 
     $view_obj = new view();
-    $view_obj->set_config($this->get_config_obj());
     $view_obj->set_action($action_obj);
-    // 画面を表示
-    $view_obj->show_display();
+
+    if (true === $this->get_is_ajax())
+    {
+      // 画面を表示せずに、クライアントにレスポンスを返す
+      $view_obj->return_response();
+    }
+    else
+    {
+      // 画面を表示
+      $view_obj->show_display();
+    }
   }
 
   /**
@@ -280,16 +292,25 @@ class controller
     if ($e instanceof custom_exception)
     {
       $message = $e->get_message();
-      $e->set_config($this->get_config_obj());
       $e->write_log();
     }
-    // display_errorsの値によって処理を変更する
-    if ('1' === ini_get('display_errors')) {
-      echo '<pre>' . $message . '</pre>';
-    } else {
-      // エラー画面にリダイレクト
-      $this->redirect_location('303 See Other', 'error.html');
+
+    if (true === $this->get_is_ajax())
+    {
+      header('HTTP/1.1 500 Internal Server Error');
+      exit();
     }
+    else
+    {
+      // display_errorsの値によって処理を変更する
+      if ('1' === ini_get('display_errors')) {
+        echo '<pre>' . $message . '</pre>';
+      } else {
+        // エラー画面にリダイレクト
+        $this->redirect_location('303 See Other', 'error.html');
+      }
+    }
+
   }
 
   /**
@@ -441,7 +462,7 @@ class controller
         $request = stripslashes($request);
       }
       // 文字エンコードの確認
-      if (false === mb_check_encoding($request, $this->get_config_obj()->search('pg_character_set')))
+      if (false === mb_check_encoding($request))
       {
         throw new custom_exception('文字コード不正: 対象文字 = ' . $request, __CLASS__ . ':' . __FUNCTION__);
       }
@@ -492,20 +513,13 @@ class controller
   protected function redirect_location($http_status, $path_from_document_root)
   {
     // URIを生成
-    $uri = 'http://' . $this->get_config_obj()->search('host_name') . DIRECTORY_SEPARATOR . $path_from_document_root;
+    $uri = 'http://' . config::get_instance()->search('host_name') . DIRECTORY_SEPARATOR . $path_from_document_root;
     // ステータスコードを発行
     header('HTTP/1.1 ' . $http_status);
     // リダイレクトを発行
     header('Location: ' . $uri);
     exit();
   }
-
-  /**
-   * 設定ファイルクラスインスタンス
-   *
-   * @access private
-   */
-  private $config_obj;
 
   /**
    * フレームワークベースディレクトリのパス
@@ -534,4 +548,11 @@ class controller
    * @access private
    */
   private $process;
+
+  /**
+   * Ajaxリクエストか否か
+   *
+   * @access private
+   */
+  private $is_ajax;
 }

@@ -79,15 +79,19 @@ class base_repository_impl implements base_repository
     return $this->associated_entities;
   }
 
-  protected function set_server_type($server_type)
+  protected function set_server_type($server_type, $is_init = true)
   {
     if ('master' === $server_type || 'slave' === $server_type)
     {
-      return $this->server_type = $server_type;
+      $this->server_type = $server_type;
     }
     else
     {
       throw new custom_exception('データアクセスサーバーの種別が誤っています', __CLASS__ . ':' . __FUNCTION__);
+    }
+    if (true === $is_init)
+    {
+      $this->get_storage_handler()->init();
     }
   }
 

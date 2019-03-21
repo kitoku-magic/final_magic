@@ -4,6 +4,7 @@
  * 設定ファイル管理クラス
  *
  * 設定ファイル内の値の設定や値の取得を行うクラス
+ * シングルトンなクラス
  *
  * @access  public
  * @create  2010/08/12
@@ -11,15 +12,38 @@
  */
 class config
 {
-
   /**
    * コンストラクタ
    *
    * @access public
    */
-  public function __construct()
+  private function __construct()
   {
-    $this->list = array();
+    // 外部からのインスタンス生成を禁止
+  }
+
+  /**
+   * シングルトンなクラスインスタンスを取得
+   */
+  public static function get_instance()
+  {
+    if (null === self::$config)
+    {
+      // 初回アクセス時のみインスタンスを生成し以降はずっと保持
+      self::$config = new config();
+      self::$config->list = array();
+    }
+
+    return self::$config;
+  }
+
+  /**
+   * インスタンスのコピー
+   */
+  public function __clone()
+  {
+    // シングルトンの為、インスタンスのコピーは禁止
+    throw new custom_exception(get_class($this) . 'はシングルトンの為、インスタンスのコピーは出来ません', __CLASS__ . ':' . __FUNCTION__);
   }
 
   /**
@@ -128,6 +152,12 @@ class config
       }
     }
   }
+
+  /**
+   * シングルトンな自クラスのインスタンス
+   *
+   */
+  private static $config;
 
   /**
    * 設定値格納配列

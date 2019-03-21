@@ -15,6 +15,43 @@ abstract class entity
   abstract public function get_table_columns();
 
   /**
+   * 各エンティティクラスに定義されているプロパティに値を設定する
+   *
+   * @param string $name プロパティ名
+   * @param mixed $value 値
+   */
+  public function __set($name, $value)
+  {
+    if (true === $this->is_property_exists($name))
+    {
+      $this->properties[$name] = $value;
+    }
+    else
+    {
+      throw new custom_exception('対象のプロパティが存在しません', __CLASS__ . ':' . __FUNCTION__);
+    }
+  }
+
+  /**
+   * 各エンティティクラスに定義されているプロパティの値を取得する
+   *
+   * @param string $name プロパティ名
+   * @return mixed プロパティの値
+   */
+  public function __get($name)
+  {
+    // nullを設定したいケースに備え、array_key_existsにしている
+    if (true === array_key_exists($name, $this->properties))
+    {
+      return $this->properties[$name];
+    }
+    else
+    {
+      throw new custom_exception('対象のプロパティに値が設定されていません', __CLASS__ . ':' . __FUNCTION__);
+    }
+  }
+
+  /**
    * エンティティの任意の項目にデータをセットする
    *
    * @param string $column データを設定したい任意の項目名
@@ -42,4 +79,11 @@ abstract class entity
     //return property_exists(get_parent_class($this), $field_name);
     return array_key_exists($field_name, $this->get_table_columns());
   }
+
+  /**
+   * エンティティクラスのプロパティ情報を格納する配列
+   *
+   * @access private
+   */
+  private $properties;
 }

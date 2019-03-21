@@ -40,28 +40,6 @@ class custom_exception extends Exception
   }
 
   /**
-   * 設定ファイルクラスインスタンス設定
-   *
-   * @access public
-   * @param config $config 設定ファイルクラスインスタンス
-   */
-  public function set_config($config)
-  {
-    $this->config = $config;
-  }
-
-  /**
-   * 設定ファイルクラスインスタンス取得
-   *
-   * @access protected
-   * @return config 設定ファイルクラスインスタンス
-   */
-  protected function get_config()
-  {
-    return $this->config;
-  }
-
-  /**
    * メッセージ設定
    *
    * @access protected
@@ -212,7 +190,7 @@ class custom_exception extends Exception
       . 'Referer = ' . $referer . PHP_EOL . $this->getTraceAsString() . PHP_EOL;
 
     // ログに書き込む
-    file_put_contents($this->get_config()->get_base_path() . '/log/' . $date_time->format('Ymd') . '.log', $error_string, FILE_APPEND);
+    file_put_contents(config::get_instance()->get_base_path() . '/log/' . $date_time->format('Ymd') . '.log', $error_string, FILE_APPEND);
   }
 
   private static $error_levels = array(
@@ -258,13 +236,6 @@ class custom_exception extends Exception
    * @access protected
    */
   protected $line_no;
-
-  /**
-   * 設定ファイルクラスインスタンス
-   *
-   * @access private
-   */
-  private $config;
 
   /**
    * 例外の深刻度（エラーレベル）

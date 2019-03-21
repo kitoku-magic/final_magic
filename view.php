@@ -35,28 +35,6 @@ class view
   }
 
   /**
-   * 設定ファイルクラスインスタンス設定
-   *
-   * @access public
-   * @param config $config 設定ファイルクラスインスタンス
-   */
-  public function set_config($config)
-  {
-    $this->config = $config;
-  }
-
-  /**
-   * 設定ファイルクラスインスタンス取得
-   *
-   * @access protected
-   * @return config 設定ファイルクラスインスタンス
-   */
-  protected function get_config()
-  {
-    return $this->config;
-  }
-
-  /**
    * モデルインスタンス設定
    *
    * @access public
@@ -107,13 +85,15 @@ class view
    */
   public function show_display()
   {
+    $config = config::get_instance();
+
     // 出力バッファリングの開始
     ob_start();
     // 出力バッファの内容を消去(クリア)
     ob_clean();
 
     // テンプレートファイルを読み込んで出力バッファに保存
-    require_once($this->get_config()->search('app_base_dir') . '/template/' . $this->get_action()->get_template_file_path());
+    require_once($config->search('app_base_dir') . '/template/' . $this->get_action()->get_template_file_path());
 
     // 出力バッファの内容を取得
     $this->set_output_html(ob_get_contents());
@@ -127,10 +107,33 @@ class view
     $this->convert_template();
 
     // レスポンスヘッダーのコンテントタイプの指定
-    header('Content-Type: text/html; charset=' . $this->get_config()->search('html_character_set'));
+    header('Content-Type: text/html; charset=' . $config->search('html_character_set'));
 
     // 置換後のテンプレートの中身を表示
     echo $this->get_output_html();
+  }
+
+  /**
+   * クライアントへレスポンスを返す
+   *
+   * @access public
+   */
+  public function return_response()
+  {
+    $response_data = array();
+
+    $template_convert = $this->get_action()->get_template_convert();
+    $response_data[] = $template_convert->get_single_array();
+    $response_data = array_merge($response_data, $template_convert->get_multi_array());
+    $response_data = array_merge($response_data, $template_convert->get_bool_array());
+
+    if ('json' === $_SERVER['HTTP_X_REQUEST_RESPONSE_TYPE'])
+    {
+      // レスポンスヘッダーのコンテントタイプの指定
+      header('Content-Type: application/json; charset=utf-8');
+
+      echo json_encode($response_data);
+    }
   }
 
   /**
@@ -191,13 +194,6 @@ class view
    * @access private
    */
   private $action = null;
-
-  /**
-   * 設定ファイルクラスインスタンス
-   *
-   * @access private
-   */
-  private $config = null;
 
   /**
    * モデルインスタンス

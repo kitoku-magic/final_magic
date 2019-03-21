@@ -134,6 +134,24 @@ abstract class form
   }
 
   /**
+   * 全てのフォームデータをtrimする
+   *
+   * @access public
+   */
+  public function trim_all_data()
+  {
+    $properties = $this->get_all_properties();
+    foreach ($properties as $field => $value)
+    {
+      if (true === is_string($value))
+      {
+        // 改行コードはtrimしない
+        $this->execute_accessor_method('set', $field, utility::mb_trim($value, '(\x20|\x09|\x00|\x0b|　)'));
+      }
+    }
+  }
+
+  /**
    * エラーカウンター(優先度低：今後の展開次第だが、このフィールドはこのクラスに書かない方が良いかも)
    *
    * @access private
