@@ -99,9 +99,102 @@ class utility
    * @param string $character_mask_pattern trimする対象の文字の正規表現パターン
    * @return string trim後の値
    */
-  static public function mb_trim($value, $character_mask_pattern = '(\x20|\x09|\x0a|\x0d|\x00|\x0b|　)')
+  static public function mb_trim($value, $character_mask_pattern = '(\x20|\x09|\x0a|\x0d|\x00|\x0b|\x{3000})')
   {
     return preg_replace('/\A' . $character_mask_pattern . '++|' . $character_mask_pattern . '++\z/u', '', $value);
+  }
+
+  /**
+   * マルチバイト対応ord
+   *
+   * 標準のord関数のマルチバイト対応版
+   *
+   * @access public
+   * @param string $char 対象の文字
+   * @return number 対象の文字のコードポイントを１０進数にした値
+   */
+  static public function mb_ord($char)
+  {
+    return hexdec(bin2hex(mb_convert_encoding($char, 'UTF-32BE')));
+  }
+
+  /**
+   * 最小桁数のチェック
+   *
+   * @access public
+   * @param string $value チェックしたい値
+   * @param string $length チェックしたい最小桁数
+   * @return bool 最小桁数以上ならtrue
+   */
+  static public function check_min_length($value, $length)
+  {
+    return mb_strlen($value) >= $length;
+  }
+
+  /**
+   * 最大桁数のチェック
+   *
+   * @access public
+   * @param string $value チェックしたい値
+   * @param string $length チェックしたい最大桁数
+   * @return bool 最大桁数以下ならtrue
+   */
+  static public function check_max_length($value, $length)
+  {
+    return mb_strlen($value) <= $length;
+  }
+
+  /**
+   * 空かどうかのチェック
+   *
+   * @access public
+   * @param string $value チェックしたい値
+   * @return bool 値が空ならtrue
+   */
+  static public function is_empty($value)
+  {
+    return null === $value || '' === $value;
+  }
+
+  /**
+   * 日付が妥当かどうかのチェック
+   *
+   * @access public
+   * @param string $date チェックしたい日付
+   * @param string $format 日付フォーマット
+   * @return bool 日付が妥当ならtrue
+   */
+  static public function check_date($date, $format = 'Y-m-d H:i:s')
+  {
+    $d = date_create($date);
+    if (false === $d)
+    {
+      return $d;
+    }
+    return $d->format($format) === $date;
+  }
+
+  /**
+   * 電話番号が妥当かどうかのチェック
+   *
+   * @access public
+   * @param string $value チェックしたい番号
+   * @param bool $is_include_hyphen ハイフンを含んでいるか否か
+   * @return bool 番号が妥当ならtrue
+   */
+  static public function check_telephone($value, $is_include_hyphen = false)
+  {
+    $check_length = 11;
+    if (true === $is_include_hyphen)
+    {
+      $check_length += 2;
+    }
+    if ($check_length < mb_strlen($value))
+    {
+      return false;
+    }
+    // 先頭が0から始まっていなければ不正
+    return 0 === mb_strpos($value, '0');
   }
 
   /**

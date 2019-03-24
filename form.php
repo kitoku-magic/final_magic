@@ -146,7 +146,7 @@ abstract class form
       if (true === is_string($value))
       {
         // 改行コードはtrimしない
-        $this->execute_accessor_method('set', $field, utility::mb_trim($value, '(\x20|\x09|\x00|\x0b|　)'));
+        $this->execute_accessor_method('set', $field, utility::mb_trim($value, '(\x20|\x09|\x00|\x0b|\x{3000})'));
       }
     }
   }

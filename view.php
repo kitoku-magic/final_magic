@@ -109,6 +109,11 @@ class view
     // レスポンスヘッダーのコンテントタイプの指定
     header('Content-Type: text/html; charset=' . $config->search('html_character_set'));
 
+    // TODO: 常に出力するheaderを書く
+    // header('X-Content-Type-Options: nosniff');
+    // X-Frame-Option
+    // XSSのヘッダ
+
     // 置換後のテンプレートの中身を表示
     echo $this->get_output_html();
   }
@@ -131,6 +136,8 @@ class view
     {
       // レスポンスヘッダーのコンテントタイプの指定
       header('Content-Type: application/json; charset=utf-8');
+
+      // TODO: 常に出力するheaderを書く
 
       echo json_encode($response_data);
     }

@@ -38,6 +38,13 @@ abstract class action
   }
 
   /**
+   * ビジネスロジックを実行する(認証後にexecuteメソッドから呼ぶ)
+   *
+   * @access protected
+   */
+  abstract protected function execute_auth();
+
+  /**
    * フォームインスタンス設定
    *
    * @access public
@@ -187,7 +194,7 @@ abstract class action
     if (false === isset($_SESSION['auth_login_id']))
     {
       // 認証されていないかタイムアウト
-      $this->get_model()->set_auth_error(true);
+      $this->get_form()->set_auth_error(true);
       return;
     }
     // ビジネスロジックの実行
@@ -198,7 +205,7 @@ abstract class action
    * 全てのフォームデータをModelのセッターに設定する
    *
    * @access public
-   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_COOKIE)
+   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_FILES,$_COOKIE)
    */
   public function set_form_to_model($request_parameter_array)
   {
@@ -216,7 +223,7 @@ abstract class action
    * 全てのフォームデータをフォームクラスに設定する
    *
    * @access public
-   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_COOKIE)
+   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_FILES,$_COOKIE)
    */
   public function set_form_data($request_parameter_array)
   {
@@ -262,24 +269,6 @@ abstract class action
         $_SESSION[$key] = $val;
       }
     }
-  }
-
-  /**
-   * ビジネスロジックを実行する(認証後に下記のexecuteメソッドから呼ぶ)
-   *
-   * @access protected
-   */
-  protected function execute_auth()
-  {
-  }
-
-  /**
-   * HTMLに表示するデータのセット
-   *
-   * @access protected
-   */
-  protected function set_html()
-  {
   }
 
   /**

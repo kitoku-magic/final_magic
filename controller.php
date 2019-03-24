@@ -213,6 +213,7 @@ class controller
     // 以下の変数内のパラメータ値に反映されないので、個別にチェックする
     $_GET = $this->check_request_parameter($_GET);
     $_POST = $this->check_request_parameter($_POST);
+    $_FILES = $this->check_request_parameter($_FILES);
     $_COOKIE = $this->check_request_parameter($_COOKIE);
 
     // パラメータから対象画面名を取得
@@ -252,7 +253,7 @@ class controller
     $action_obj = $this->get_dispatch_class_obj('action');
     $action_obj->set_form($form_obj);
     // 全てのフォーム値をフォームクラスに設定
-    $action_obj->set_form_data(array($_GET, $_POST, $_COOKIE));
+    $action_obj->set_form_data(array($_GET, $_POST, $_FILES, $_COOKIE));
 
     // DBを使う設定の時にはDBハンドルを設定
     if ('true' === $config->search('db_used'))
@@ -491,10 +492,10 @@ class controller
     {
       // １文字取得
       $character = mb_substr($check_val, $i, 1);
-      // ASCIIコード値を取得
-      $ascii_code = ord($character);
+      // Unicodeのコードポイント値を取得
+      $code_point = utility::mb_ord($character);
       // NULLバイト文字なら取り除いて処理終了
-      if (0 === $ascii_code)
+      if (0 === $code_point)
       {
         return str_replace("\0", '', $check_val);
       }
