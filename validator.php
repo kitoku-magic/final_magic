@@ -35,6 +35,8 @@ abstract class validator
 
   const DATE_MESSAGE = '{show_name}は不正な日付です';
 
+  const ZIP_CODE_FORMAT_MESSAGE = '{show_name}は不正な郵便番号です';
+
   const TELEPHONE_FORMAT_MESSAGE = '{show_name}は不正な番号です';
 
   public function __construct()
@@ -324,13 +326,27 @@ abstract class validator
     }
   }
 
+  protected function is_zip_code_format($value, $options)
+  {
+    $is_check = $this->is_check($value);
+
+    if (true === $is_check)
+    {
+      return utility::check_zip_code($value, $options['is_include_hyphen']);
+    }
+    else
+    {
+      return true;
+    }
+  }
+
   protected function is_telephone_format($value, $options)
   {
     $is_check = $this->is_check($value);
 
     if (true === $is_check)
     {
-      return utility::check_telephone($value);
+      return utility::check_telephone($value, $options['is_include_hyphen']);
     }
     else
     {

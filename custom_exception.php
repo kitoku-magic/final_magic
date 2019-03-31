@@ -187,10 +187,10 @@ class custom_exception extends Exception
     $severity = $this->get_severity();
     $error_string = $date_time->format('Y-m-d H:i:s') . ' ' . (isset(self::$error_levels[$severity]) ? self::$error_levels[$severity] : $severity) . ' '
       . $this->get_original_code() . ' ' . $this->get_message() . ' ' . $this->get_file_name() . '(' . $this->get_line_no() . ')' . PHP_EOL
-      . 'Referer = ' . $referer . PHP_EOL . $this->getTraceAsString() . PHP_EOL;
+      . 'Referer = ' . $referer . PHP_EOL . $this->getTraceAsString();
 
     // ログに書き込む
-    file_put_contents(config::get_instance()->get_base_path() . '/log/' . $date_time->format('Ymd') . '.log', $error_string, FILE_APPEND);
+    log::get_instance()->write($error_string);
   }
 
   private static $error_levels = array(

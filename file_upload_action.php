@@ -397,16 +397,16 @@ abstract class file_upload_action extends action
         $white_list .= '|';
         // 漢字
         $white_list .= $config->search('pattern_kanji');
-        $white_list .= '?|';
+        $white_list .= '?|[';
         // 全角英数字・半角英数字
-        $white_list .= '[a-zA-Z0-9ａ-ｚA-Z０-９]';
-        $white_list .= '|';
+        $white_list .= $config->search('pattern_all_width_alphabet_number');
+        $white_list .= ']|[';
         // 全角記号と全角スペース
-        $white_list .= '[！”＃＄％＆’（）＝～｜‘｛＋＊｝＜＞？＿－＾￥＠「；：」、。・　]';
-        $white_list .= '|';
+        $white_list .= $config->search('pattern_full_width_sign');
+        $white_list .= ']|[';
         // アンダーバー・半角スペース・ドット（拡張子で使うので一つだけ）
-        $white_list .= '[_ \.]';
-        $white_list .= ')+\z/u';
+        $white_list .= '_ .';
+        $white_list .= '])+\z/u';
 
         $error_message = '';
         for ($i = 0, $dot = 0; $i < $file_name_length; $i++)
@@ -415,18 +415,7 @@ abstract class file_upload_action extends action
           $char_code_point = utility::mb_ord($char);
           if (1 !== preg_match($white_list, $char))
           {
-//var_dump($char);
             $error_message = 'に許可されていない文字が含まれています';
-            break;
-          }
-          else if (0x20 > $char_code_point)
-          {
-            $error_message = 'に制御文字が含まれています';
-            break;
-          }
-          else if (0x2f === $char_code_point || 0x5c === $char_code_point)
-          {
-            $error_message = 'にバックスラッシュが含まれています';
             break;
           }
           else if (0x2e === $char_code_point)
@@ -448,51 +437,64 @@ abstract class file_upload_action extends action
         }
       }
 
-      /*
-      // ファイルデータからSHA-1ハッシュを取ってファイル名を決定し，保存する
-        if (!move_uploaded_file(
-          $_FILES['upfile']['tmp_name'],
-          $path = sprintf('./uploads/%s.%s',
-          sha1_file($_FILES['upfile']['tmp_name']),
-          $ext
-        )
-      )) {
-        throw new RuntimeException('ファイル保存時にエラーが発生しました');
+      if (true === $result)
+      {
+        $log_error_message = '';
+        $file_path = $config->search('app_file_tmp_save_path') . DIRECTORY_SEPARATOR . $file_upload_setting['save_path_identifier'] . DIRECTORY_SEPARATOR . date_create()->format('Ymd');
+        // エラーチェックは戻り値で行うのでエラー抑制演算子を付ける
+        $r = @mkdir($file_path, 0700, true);
+        if (false === $r)
+        {
+          // 同時に同名のディレクトリを作るアクセスがあった時のチェック用
+          if (false === is_dir($file_path))
+          {
+            // ディレクトリ作成に失敗
+            $log_error_message = 'アップロードファイルの保存先ディレクトリの作成に失敗しました';
+          }
         }
+        if ('' === $log_error_message)
+        {
+          if (true === isset($file_upload_setting['is_secret']) &&
+            true === $file_upload_setting['is_secret'])
+          {
+            $token = security::get_token();
+          }
+          else
+          {
+            $token = '';
+          }
+          $file_name = hash('sha512', $token . hash_file('sha512', $file_upload_value['tmp_name']) . utility::get_unique_id()) . '.' . $path_info_name['extension'];
+          $full_file_path = $file_path . DIRECTORY_SEPARATOR . $file_name;
+          $fp = @fopen($full_file_path, 'xb');
+          if (false === $fp)
+          {
+            $log_error_message = 'アップロードファイルの保存先パスのオープンに失敗しました';
+          }
+          else
+          {
+            if (true === move_uploaded_file($file_upload_value['tmp_name'], $full_file_path))
+            {
+              chmod($full_file_path, 0600);
+            }
+            else
+            {
+              $log_error_message = 'アップロードファイルの保存に失敗しました';
+            }
+            fclose($fp);
+          }
+        }
+        if ('' === $log_error_message)
+        {
+          $form->execute_accessor_method('set', $file_upload_setting['path'], $full_file_path);
+        }
+        else
+        {
+          $result = false;
+          $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'のアップロードに失敗しました。もう一度アップロードして下さい');
+          log::get_instance()->write($log_error_message);
+        }
+      }
 
-      // ファイルのパーミッションを確実に0644に設定する
-      chmod($path, 0644);
-      */
-
-
-    /*
-    ５．mkdir()は、0700などにして、第三引数をtrueにする。直後にchmod(0644)した方が良いか？
-      ６．アップロードファイルを作成後に、chmod(0644)する
-
-      $path = '/tmp/nginx_test/test1/test2';
-
-    if (file_exists($path) === false) {
-      // 同時にアクセスされたケースに備えて、一応エラー抑止
-      // エラー抑止しても、失敗時は戻り値がfalseだったので
-      $ret = @mkdir($path, 0700, true);
-      if ($ret === false) {
-        var_dump('directory create miss: ' . $path);
-    } else {
-      $file_name = 'test3.pdf';
-      $full_file_path = $path . '/' . $file_name;
-      if (file_exists($full_file_path) === false) {
-        // 同時にアクセスされたケースに備えて、一応エラー抑止
-        // エラー抑止しても、失敗時は戻り値がfalseだったので
-        $fp = @fopen($full_file_path, 'xb');
-        if ($fp === false) {
-    } else {
-      fclose($fp);
-      chmod($full_file_path, 0600);
-    }
-    }
-    }
-    }
-     */
       return $result;
     }
   }

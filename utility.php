@@ -105,6 +105,47 @@ class utility
   }
 
   /**
+   * ハイフンを置換する
+   *
+   * @access public
+   * @param string $value 置換元の値
+   * @param string $replace 置換したいハイフン文字
+   * @return string ハイフン置換後の値
+   */
+  static public function replace_hyphen($value, $replace)
+  {
+    // 色々なハイフン（主要なもの？）を変換
+    $hyphen_list = array(
+      "\x2d",
+      "\xef\xb9\xa3",
+      "\xef\xbc\x8d",
+      "\xe2\x80\x90",
+      "\xe2\x80\x91",
+      "\xe2\x81\x83",
+      "\xcb\x97",
+      "\xe2\x88\x92",
+      "\xe2\x80\x92",
+      "\xe2\x80\x93",
+      "\xe2\x80\x94",
+      "\xe2\x80\x95",
+      "\xef\xb9\x98",
+      "\xe2\x8e\xaf",
+      "\xe2\x8f\xa4",
+      "\xe2\x9a\x8a",
+      "\xe2\x94\x80",
+      "\xe1\x85\xb3",
+      "\xe2\xbc\x80",
+      "\xe3\x83\xbc",
+      "\xe3\x85\xa1",
+      "\xe3\x87\x90",
+      "\xe4\xb8\x80",
+      "\xef\xbd\xb0",
+      "\xef\xbf\x9a",
+    );
+    return str_replace($hyphen_list, $replace, $value);
+  }
+
+  /**
    * マルチバイト対応ord
    *
    * 標準のord関数のマルチバイト対応版
@@ -175,6 +216,26 @@ class utility
   }
 
   /**
+   * 郵便番号が妥当かどうかのチェック
+   *
+   * @access public
+   * @param string $value チェックしたい郵便番号
+   * @param bool $is_include_hyphen ハイフンを含んでいるか否か
+   * @return bool 郵便番号が妥当ならtrue
+   */
+  static public function check_zip_code($value, $is_include_hyphen = false)
+  {
+    $pattern = '/\A[0-9]{3}';
+    if (true === $is_include_hyphen)
+    {
+      $pattern .= '-';
+    }
+    $pattern .= '[0-9]{4}\z/u';
+
+    return 1 === preg_match($pattern, $value);
+  }
+
+  /**
    * 電話番号が妥当かどうかのチェック
    *
    * @access public
@@ -184,17 +245,30 @@ class utility
    */
   static public function check_telephone($value, $is_include_hyphen = false)
   {
-    $check_length = 11;
+    $pattern = '/\A0[1-9][0-9]{0,3}';
     if (true === $is_include_hyphen)
     {
-      $check_length += 2;
+      $pattern .= '-';
     }
-    if ($check_length < mb_strlen($value))
+    $pattern .= '[0-9]{1,4}';
+    if (true === $is_include_hyphen)
     {
-      return false;
+      $pattern .= '-';
     }
-    // 先頭が0から始まっていなければ不正
-    return 0 === mb_strpos($value, '0');
+    $pattern .= '[0-9]{4}\z/u';
+
+    return 1 === preg_match($pattern, $value);
+  }
+
+  /**
+   * ユニークなIDを取得する
+   *
+   * @access public
+   * @return string ユニークID
+   */
+  static public function get_unique_id()
+  {
+    return uniqid(mt_rand() . '', true);
   }
 
   /**

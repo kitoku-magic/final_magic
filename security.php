@@ -54,12 +54,12 @@ class security
   }
 
   /**
-   * 第三者が知り得ない秘密情報(CSRFトークン)の値を取得する
+   * 第三者が知り得ない秘密情報(トークン)の値を取得する
    *
    * @access public
    * @return string トークン値
    */
-  static public function get_csrf_token()
+  static public function get_token()
   {
     return hash('sha512', file_get_contents('/dev/urandom', false, null, 0, 128));
   }
