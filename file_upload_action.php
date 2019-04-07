@@ -408,31 +408,10 @@ abstract class file_upload_action extends action
         $white_list .= '_ .';
         $white_list .= '])+\z/u';
 
-        $error_message = '';
-        for ($i = 0, $dot = 0; $i < $file_name_length; $i++)
-        {
-          $char = mb_substr($file_upload_value['name'], $i, 1);
-          $char_code_point = utility::mb_ord($char);
-          if (1 !== preg_match($white_list, $char))
-          {
-            $error_message = 'に許可されていない文字が含まれています';
-            break;
-          }
-          else if (0x2e === $char_code_point)
-          {
-            $dot++;
-            if (1 < $dot)
-            {
-              $error_message = 'にドットが複数含まれています';
-              break;
-            }
-          }
-        }
-
-        if ('' !== $error_message)
+        if (1 !== preg_match($white_list, $path_info_name['filename']))
         {
           $result = false;
-          $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . $error_message);
+          $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'に許可されていない文字が含まれています');
           continue;
         }
       }
@@ -442,8 +421,7 @@ abstract class file_upload_action extends action
         $log_error_message = '';
         $file_path = $config->search('app_file_tmp_save_path') . DIRECTORY_SEPARATOR . $file_upload_setting['save_path_identifier'] . DIRECTORY_SEPARATOR . date_create()->format('Ymd');
         // エラーチェックは戻り値で行うのでエラー抑制演算子を付ける
-        $r = @mkdir($file_path, 0700, true);
-        if (false === $r)
+        if (false === is_dir($file_path) && false === @mkdir($file_path, 0700, true))
         {
           // 同時に同名のディレクトリを作るアクセスがあった時のチェック用
           if (false === is_dir($file_path))
