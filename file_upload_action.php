@@ -463,6 +463,7 @@ abstract class file_upload_action extends action
         }
         if ('' === $log_error_message)
         {
+          $form->execute_accessor_method('set', $file_upload_setting['name'], $file_upload_value['name']);
           $form->execute_accessor_method('set', $file_upload_setting['path'], $full_file_path);
         }
         else
