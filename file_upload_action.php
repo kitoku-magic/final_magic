@@ -29,126 +29,18 @@ abstract class file_upload_action extends action
    */
   protected function init()
   {
-    $this->set_form(null);
-    $this->set_model(null);
-    $this->set_storage_handlers(array());
-    $this->set_template_convert(null);
-    $this->set_template_file_path('');
   }
 
   /**
-   * フォームインスタンス設定
+   * ファイルアップロードのチェックとデータの設定
    *
-   * @access public
-   * @param form $form フォームインスタンス
+   * @access protected
+   * @param array $file_upload_settings ファイルアップロードの設定情報
+   * @return array エラーが無ければ空配列
    */
-  public function set_form($form)
-  {
-    $this->form = $form;
-  }
-
-  /**
-   * フォームインスタンス取得
-   *
-   * @access public
-   * @return form フォームインスタンス
-   */
-  public function get_form()
-  {
-    return $this->form;
-  }
-
-  /**
-   * モデルインスタンス設定
-   *
-   * @access public
-   * @param model $model モデルインスタンス
-   */
-  public function set_model($model)
-  {
-    $this->model = $model;
-  }
-
-  /**
-   * モデルインスタンス取得
-   *
-   * @access public
-   * @return model モデルインスタンス
-   */
-  public function get_model()
-  {
-    return $this->model;
-  }
-
-  /**
-   * ストレージハンドラー配列設定
-   *
-   * @access public
-   * @param array $storage_handlers ストレージハンドラー配列
-   */
-  public function set_storage_handlers(array $storage_handlers)
-  {
-    $this->storage_handlers = $storage_handlers;
-  }
-
-  /**
-   * ストレージハンドラー配列取得
-   *
-   * @access public
-   * @return array ストレージハンドラー配列
-   */
-  public function get_storage_handlers()
-  {
-    return $this->storage_handlers;
-  }
-
-  /**
-   * テンプレート置換処理インスタンス設定
-   *
-   * @access public
-   * @param template_convert $template_convert テンプレート置換処理インスタンス
-   */
-  public function set_template_convert($template_convert)
-  {
-    $this->template_convert = $template_convert;
-  }
-
-  /**
-   * テンプレート置換処理インスタンス取得
-   *
-   * @access public
-   * @return template_convert テンプレート置換処理インスタンス
-   */
-  public function get_template_convert()
-  {
-    return $this->template_convert;
-  }
-
-  /**
-   * テンプレートファイルパス設定
-   *
-   * @access public
-   * @param string $template_file_path テンプレートファイルパス
-   */
-  public function set_template_file_path($template_file_path)
-  {
-    $this->template_file_path = $template_file_path;
-  }
-
-  /**
-   * テンプレートファイルパス取得
-   *
-   * @access public
-   * @return string テンプレートファイルパス
-   */
-  public function get_template_file_path()
-  {
-    return $this->template_file_path;
-  }
-
   protected function check_and_set_file_upload(array $file_upload_settings)
   {
-    $result = true;
+    $errors = array();
 
     $form = $this->get_form();
 
@@ -178,12 +70,12 @@ abstract class file_upload_action extends action
       if (false === isset($file_upload_value['error']) ||
           false === is_int($file_upload_value['error']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'は不正なパラメータです');
         continue;
       }
 
-      $is_continue = false;
+      $is_continue = true;
       switch ($file_upload_value['error'])
       {
         case UPLOAD_ERR_OK:
@@ -192,31 +84,31 @@ abstract class file_upload_action extends action
         case UPLOAD_ERR_NO_FILE:
           // ファイル未選択
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'はファイルが選択されていません');
-          $is_continue = true;
+          $is_continue = false;
           break;
         case UPLOAD_ERR_INI_SIZE:
         case UPLOAD_ERR_FORM_SIZE:
           // php.ini定義の最大サイズ超過か、フォーム定義の最大サイズ超過 (設定した場合のみ)
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'はファイルサイズが大きすぎます');
-          $is_continue = true;
+          $is_continue = false;
           break;
         default:
           // その他のエラー
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'は原因不明のエラーが発生しました');
-          $is_continue = true;
+          $is_continue = false;
           break;
       }
 
-      if (true === $is_continue)
+      if (false === $is_continue)
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         continue;
       }
 
       if (false === isset($file_upload_value['size']) ||
           $file_upload_value['size'] > $file_upload_setting['max_file_size'])
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'はアップロード可能なファイルサイズを超えています');
         continue;
       }
@@ -225,7 +117,7 @@ abstract class file_upload_action extends action
           true === utility::is_empty($file_upload_value['tmp_name']) ||
           false === is_uploaded_file($file_upload_value['tmp_name']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'はアップロードされていません');
         continue;
       }
@@ -237,14 +129,14 @@ abstract class file_upload_action extends action
       $mime_type = $mime_types[0];
       if ('image/bmp' === $mime_type)
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'はビットマップ画像なのでアップロード出来ません');
         continue;
       }
 
       if (false === array_key_exists($mime_type, $file_upload_setting['allow_mime_types']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'は許可されていないファイル形式です');
         continue;
       }
@@ -252,7 +144,7 @@ abstract class file_upload_action extends action
       if (false === isset($file_upload_value['name']) ||
         true === utility::is_empty($file_upload_value['name']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'のファイル名が不明です');
         continue;
       }
@@ -260,7 +152,7 @@ abstract class file_upload_action extends action
       // 文字コード
       if (false === mb_check_encoding($file_upload_value['name']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'の文字コードが不正です');
         continue;
       }
@@ -274,14 +166,14 @@ abstract class file_upload_action extends action
 
       if (true === utility::is_empty($path_info_name['filename']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'のファイル名が空です');
         continue;
       }
 
       if (false === isset($path_info_name['extension']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'の拡張子が不明です');
         continue;
       }
@@ -289,7 +181,7 @@ abstract class file_upload_action extends action
       if (false === array_key_exists($mime_type, $file_upload_setting['allow_extensions']) ||
           false === array_key_exists($path_info_name['extension'], $file_upload_setting['allow_extensions'][$mime_type]))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'の拡張子とファイル形式が合っていません');
         continue;
       }
@@ -297,14 +189,14 @@ abstract class file_upload_action extends action
       if (false === isset($file_upload_value['type']) ||
           true === utility::is_empty($file_upload_value['type']))
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'のファイル形式が不明です');
         continue;
       }
 
       if ($mime_type !== $file_upload_value['type'])
       {
-        $result = false;
+        $errors[$file_upload_setting['name']] = true;
         $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'のファイル形式が矛盾しています');
         continue;
       }
@@ -317,7 +209,7 @@ abstract class file_upload_action extends action
         $file_name_length = mb_strlen($file_upload_value['name']);
         if ($file_upload_setting['max_length'] < $file_name_length)
         {
-          $result = false;
+          $errors[$file_upload_setting['name']] = true;
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'の長さが最大文字数を超えています');
           continue;
         }
@@ -325,7 +217,7 @@ abstract class file_upload_action extends action
         // アンダーバーが連続
         if (false !== mb_strpos($file_upload_value['name'], '__'))
         {
-          $result = false;
+          $errors[$file_upload_setting['name']] = true;
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'にアンダーバーが連続して含まれています');
           continue;
         }
@@ -340,7 +232,7 @@ abstract class file_upload_action extends action
             '　' === mb_substr($path_info_name['filename'], 0, 1) ||
             '　' === mb_substr($path_info_name['filename'], -1, 1))
         {
-          $result = false;
+          $errors[$file_upload_setting['name']] = true;
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'の先頭か末尾に空白が入っています');
           continue;
         }
@@ -377,7 +269,7 @@ abstract class file_upload_action extends action
         if (true === array_key_exists(strtoupper($file_upload_value['name']), $reserved_words) ||
             true === array_key_exists(strtoupper($path_info_name['filename']), $reserved_words))
         {
-          $result = false;
+          $errors[$file_upload_setting['name']] = true;
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'は予約語です');
           continue;
         }
@@ -404,19 +296,19 @@ abstract class file_upload_action extends action
         // 全角記号と全角スペース
         $white_list .= $config->search('pattern_full_width_sign');
         $white_list .= ']|[';
-        // アンダーバー・半角スペース・ドット（拡張子で使うので一つだけ）
-        $white_list .= '_ .';
+        // アンダーバー・半角スペース
+        $white_list .= '_ ';
         $white_list .= '])+\z/u';
 
         if (1 !== preg_match($white_list, $path_info_name['filename']))
         {
-          $result = false;
+          $errors[$file_upload_setting['name']] = true;
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'に許可されていない文字が含まれています');
           continue;
         }
       }
 
-      if (true === $result)
+      if (false === array_key_exists($file_upload_setting['name'], $errors))
       {
         $log_error_message = '';
         $file_path = $config->search('app_file_tmp_save_path') . DIRECTORY_SEPARATOR . $file_upload_setting['save_path_identifier'] . DIRECTORY_SEPARATOR . date_create()->format('Ymd');
@@ -432,6 +324,7 @@ abstract class file_upload_action extends action
         }
         if ('' === $log_error_message)
         {
+          // ファイル名を推測困難にしたいケースの場合
           if (true === isset($file_upload_setting['is_secret']) &&
             true === $file_upload_setting['is_secret'])
           {
@@ -468,183 +361,13 @@ abstract class file_upload_action extends action
         }
         else
         {
-          $result = false;
+          $errors[$file_upload_setting['name']] = true;
           $form->execute_accessor_method('set', $file_upload_setting['name'] . '_error', $file_upload_setting['show_name'] . 'のアップロードに失敗しました。もう一度アップロードして下さい');
           log::get_instance()->write($log_error_message);
         }
       }
-
-      return $result;
-    }
-  }
-
-  /**
-   * ビジネスロジックを実行する。
-   * 個別actionにexecuteメソッドが無い時(認証時)に実行される
-   *
-   * @access public
-   */
-  public function execute()
-  {
-    // 優先度中：クライアント側のキャッシュを許可するだが、再度検討
-    //session_cache_limiter('private_no_expire');
-
-    session_start();
-
-    // ユーザーの認証セッションの場合、定期的にセッションIDを切り替える
-    // セッションIDの更新処理
-    if (true === isset($_SESSION['auth_login_id']))
-    {
-      // 10分以上経過していたらセッションを無効にする
-      if (($_SESSION['session_time'] + (10 * 60)) < time())
-      {
-        // 「ログインしている」というデータを消す
-        unset($_SESSION['auth_login_id']);
-      }
-      else
-      {
-        // 一定時間(ここでは５分)経過していたらセッションIDを更新する
-        if (($_SESSION['session_time'] + (5 * 60)) < time())
-        {
-          // セッションIDの変更と古いセッションの破棄
-          session_regenerate_id(true);
-          // セッション基準時間を更新
-          $_SESSION['session_time'] = time();
-        }
-      }
     }
 
-    // 認証状態のチェック
-    if (false === isset($_SESSION['auth_login_id']))
-    {
-      // 認証されていないかタイムアウト
-      $this->get_form()->set_auth_error(true);
-      return;
-    }
-    // ビジネスロジックの実行
-    $this->execute_auth();
+    return $errors;
   }
-
-  /**
-   * 全てのフォームデータをModelのセッターに設定する
-   *
-   * @access public
-   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_FILES,$_COOKIE)
-   */
-  public function set_form_to_model($request_parameter_array)
-  {
-    foreach ($request_parameter_array as $request_parameter_name)
-    {
-      foreach ($request_parameter_name as $key => $val)
-      {
-        // モデルのセッターに値を設定していく
-        $this->get_model()->create_accessor_name('set', $key, $val);
-      }
-    }
-  }
-
-  /**
-   * 全てのフォームデータをフォームクラスに設定する
-   *
-   * @access public
-   * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_FILES,$_COOKIE)
-   */
-  public function set_form_data($request_parameter_array)
-  {
-    $form = $this->get_form();
-    $properties = $form->get_all_properties();
-    foreach ($properties as $field => $value)
-    {
-      $is_exists = false;
-      foreach ($request_parameter_array as $request_parameter_name)
-      {
-        foreach ($request_parameter_name as $key => $val)
-        {
-          if ($field === $key)
-          {
-            $is_exists = true;
-            // フォームのセッターに値を設定していく
-            $form->execute_accessor_method('set', $key, $val);
-            break 2;
-          }
-        }
-      }
-      if (false === $is_exists)
-      {
-        $form->execute_accessor_method('set', $field, null);
-      }
-    }
-  }
-
-  /**
-   * Modelを連想配列化したデータをセッションデータに設定する
-   *
-   * @access protected
-   * @param array $model_array 連想配列化したモデルクラスインスタンス
-   * @param array $no_session_array セッションデータに設定しない項目名がキーになっている配列
-   */
-  protected function set_model_to_session($model_array, $no_session_array = array())
-  {
-    foreach ($model_array as $key => $val)
-    {
-      // キーがセッションに設定しない配列に含まれていなければデータをセット
-      if (false === in_array($key, $no_session_array))
-      {
-        $_SESSION[$key] = $val;
-      }
-    }
-  }
-
-  /**
-   * ビジネスロジックを実行する(認証後に下記のexecuteメソッドから呼ぶ)
-   *
-   * @access protected
-   */
-  protected function execute_auth()
-  {
-  }
-
-  /**
-   * HTMLに表示するデータのセット
-   *
-   * @access protected
-   */
-  protected function set_html()
-  {
-  }
-
-  /**
-   * フォームインスタンス
-   *
-   * @access private
-   */
-  private $form;
-
-  /**
-   * モデルインスタンス
-   *
-   * @access private
-   */
-  private $model;
-
-  /**
-   * ストレージハンドラー配列
-   *
-   * @access private
-   */
-  private $storage_handlers;
-
-  /**
-   * テンプレート置換処理インスタンス
-   *
-   * @access private
-   */
-  private $template_convert;
-
-  /**
-   * テンプレートファイルパス
-   *
-   * @access private
-   */
-  private $template_file_path;
 }

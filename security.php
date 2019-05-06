@@ -68,25 +68,22 @@ class security
    * CSRFトークンの値をチェックする
    *
    * @access public
+   * @param string $request_value リクエストされたトークン値
+   * @param string $save_value サーバーに保存したトークン値
    * @return boolean チェックがOKならtrue、NGならfalse
    */
-  static public function check_csrf_token($check_value)
+  static public function check_csrf_token($request_value, $save_value)
   {
-    // トークン確認
-    if (true === isset($_POST['csrf_token']))
+    // リクエストトークン確認
+    if (true === isset($request_value))
     {
-      // hiddenからPOSTされたトークンとセッションIDが違う場合は不正な遷移
-      if ($check_value !== $_POST['csrf_token'])
-      {
-        return false;
-      }
+      // リクエストされたトークンと、保存したトークンが違う場合は不正な遷移
+      return $request_value === $save_value;
     }
     else
     {
-      // hiddenからPOSTされたトークンが未設定時も不正な遷移
+      // リクエストされたトークンが未設定時も不正な遷移
       return false;
     }
-
-    return true;
   }
 }

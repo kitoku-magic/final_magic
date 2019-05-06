@@ -1,7 +1,5 @@
 <?php
 
-require_once('authentication.php');
-
 /**
  * 認証管理クラス
  *
@@ -13,7 +11,6 @@ require_once('authentication.php');
  */
 class authentication_id_pass extends authentication
 {
-
   /**
    * コンストラクタ
    *
@@ -75,7 +72,7 @@ class authentication_id_pass extends authentication
    * パスワード取得
    *
    * @access protected
-  * @return string パスワード
+   * @return string パスワード
    */
   protected function get_pass()
   {
@@ -97,7 +94,7 @@ class authentication_id_pass extends authentication
    * 認証用のSQL取得
    *
    * @access protected
-  * @return string 認証用のSQL
+   * @return string 認証用のSQL
    */
   protected function get_sql()
   {
@@ -119,7 +116,7 @@ class authentication_id_pass extends authentication
    * 認証に使うカラムのデータ型取得
    *
    * @access protected
-  * @return string 認証に使うカラムのデータ型
+   * @return string 認証に使うカラムのデータ型
    */
   protected function get_auth_data_type()
   {
@@ -145,7 +142,7 @@ class authentication_id_pass extends authentication
    */
   public function is_simple_password()
   {
-    return 0 === strcasecmp('password', $this->get_pass());
+    return false !== strpos($this->get_pass(), 'password');
   }
 
   /**
@@ -199,15 +196,15 @@ class authentication_id_pass extends authentication
   /**
    * パスワードのハッシュ値を取得する
    *
-   * @access protected
+   * @access public
    * @return string ハッシュ化されたパスワード
    */
-  protected function get_password_to_hash()
+  public function get_password_to_hash()
   {
     // ソルトを生成
     $salt = $this->create_salt();
     $hash = '';
-    $stretching_count = $this->get_config()->search('stretching_count');
+    $stretching_count = config::get_instance()->search('stretching_count');
     for ($i = 0; $i < $stretching_count; $i++)
     {
       // ストレッチングを行う
@@ -225,7 +222,7 @@ class authentication_id_pass extends authentication
    */
   protected function create_salt()
   {
-    return $this->get_id() . pack('H*', $this->get_config()->search('salt'));
+    return $this->get_id() . pack('H*', config::get_instance()->search('salt'));
   }
 
   /**

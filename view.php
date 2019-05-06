@@ -11,6 +11,27 @@
  */
 class view
 {
+  /**
+   * コンストラクタ
+   *
+   * @access public
+   */
+  public function __construct()
+  {
+    $this->init();
+  }
+
+  /**
+   * 初期化処理
+   *
+   * @access protected
+   */
+  protected function init()
+  {
+    $this->set_action(null);
+    $this->set_model(null);
+    $this->set_output_html('');
+  }
 
   /**
    * アクションクラスインスタンス設定
@@ -113,6 +134,7 @@ class view
     // header('X-Content-Type-Options: nosniff');
     // X-Frame-Option
     // XSSのヘッダ
+    // register_shutdown関数に書いた方が良い？
 
     // 置換後のテンプレートの中身を表示
     echo $this->get_output_html();
@@ -138,6 +160,7 @@ class view
       header('Content-Type: application/json; charset=utf-8');
 
       // TODO: 常に出力するheaderを書く
+      // register_shutdown関数に書いた方が良い？
 
       echo json_encode($response_data);
     }
@@ -200,19 +223,19 @@ class view
    *
    * @access private
    */
-  private $action = null;
+  private $action;
 
   /**
    * モデルインスタンス
    *
    * @access private
    */
-  private $model = null;
+  private $model;
 
   /**
    * 出力するHTML文字列
    *
    * @access private
    */
-  private $output_html = null;
+  private $output_html;
 }
