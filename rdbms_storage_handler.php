@@ -486,6 +486,18 @@ abstract class rdbms_storage_handler implements storage_handler
   }
 
   /**
+   * SQL文のSET句を作る
+   *
+   * @param array $values SET句に設定したい値配列
+   * @return string 作られたSET句
+   */
+  protected function make_set(array $values)
+  {
+    // TODO: 現状では実装が同じの為
+    return $this->make_where($values);
+  }
+
+  /**
    * RDBMS毎に異なるSQL識別子のエスケープの為の文字を取得する
    *
    * @return string SQL識別子のエスケープの為の文字
@@ -557,7 +569,7 @@ abstract class rdbms_storage_handler implements storage_handler
     else if (self::SQL_UPDATE === $mode)
     {
       $sql = 'UPDATE ' . $this->get_main_table_name();
-      $values = $this->make_where($this->get_values());
+      $values = $this->make_set($this->get_values());
       if ('' !== $values)
       {
         $sql .= ' SET ' . $values;
@@ -653,16 +665,15 @@ abstract class rdbms_storage_handler implements storage_handler
         $entity_created = true;
       }
     }
-    $config = config::get_instance();
     if (false === $entity_created)
     {
-      require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
+      $this->read_entity_class($entity_class_name);
       $main_entity = new $entity_class_name;
     }
     // 関連しているエンティティへの、データの設定
     foreach ($associated_entities as $associated_idx => $associated_entity_class_name)
     {
-      require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $associated_entity_class_name . '.php';
+      $this->read_entity_class($associated_entity_class_name);
       $associated_entity_class = new $associated_entity_class_name;
       $associated_table_meta_data = $this->get_table_meta_data($associated_tables[$associated_idx]);
       foreach ($data as $column_name => $column_value)
@@ -691,6 +702,26 @@ abstract class rdbms_storage_handler implements storage_handler
     }
 
     $this->set_main_entity($main_entity);
+  }
+
+  /**
+   * エンティティクラスを読み込む
+   *
+   * @param string $entity_class_name エンティティクラス名
+   */
+  protected function read_entity_class($entity_class_name)
+  {
+    $entity_class_file_path = config::get_instance()->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
+
+    if (true === file_exists($entity_class_file_path) &&
+        true === is_readable($entity_class_file_path))
+    {
+      require_once $entity_class_file_path;
+    }
+    else
+    {
+      throw new custom_exception('エンティティクラスが存在しません', __CLASS__ . ':' . __FUNCTION__);
+    }
   }
 
   /**

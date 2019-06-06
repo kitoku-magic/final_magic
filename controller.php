@@ -241,7 +241,7 @@ class controller
     if (true === in_array($this->get_screen() . '_' . $this->get_process(), $config->search('ajax_action_class_name_list'), true))
     {
       if (true === isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-        'fm_xml_http_request' === $_SERVER['HTTP_X_REQUESTED_WITH'])
+        $config->search('ajax_request_header') === $_SERVER['HTTP_X_REQUESTED_WITH'])
       {
         $this->set_is_ajax(true);
       }
@@ -324,7 +324,7 @@ class controller
    * @param int $errline エラーが発生した行番号
    * @param array $errcontext エラーが発生した場所のアクティブシンボルテーブルを指す配列
    */
-  public function system_error_handler($errno, $errstr, $errfile, $errline, $errcontext)
+  public function system_error_handler($errno, $errstr, $errfile, $errline, array $errcontext)
   {
     // 例外ハンドラを呼び出す
     $this->system_exception_handler(new custom_exception($errstr, __CLASS__ . ':' . __FUNCTION__, $errno, $errfile, $errline));
@@ -444,7 +444,7 @@ class controller
    * 入力値に不正なデータがないかなどをチェックする
    *
    * @access protected
-   * @param array $request リクエストパラメータ
+   * @param mixed $request リクエストパラメータ
    * @return array 不正な文字を除去後のリクエストパラメータ
    */
   protected function check_request_parameter($request)
@@ -497,6 +497,7 @@ class controller
       // NULLバイト文字なら取り除いて処理終了
       if (0 === $code_point)
       {
+        // 優先度中：１文字ずつ除去しないなら、ループは不要では？
         return str_replace("\0", '', $check_val);
       }
     }
@@ -514,6 +515,7 @@ class controller
   protected function redirect_location($http_status, $path_from_document_root)
   {
     // URIを生成
+    // 優先度中：デフォルトはhttpsにする？
     $uri = 'http://' . config::get_instance()->search('host_name') . DIRECTORY_SEPARATOR . $path_from_document_root;
     // ステータスコードを発行
     header('HTTP/1.1 ' . $http_status);

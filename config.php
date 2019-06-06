@@ -156,6 +156,7 @@ class config
   /**
    * シングルトンな自クラスのインスタンス
    *
+   * @access private
    */
   private static $config;
 

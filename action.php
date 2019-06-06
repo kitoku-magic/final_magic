@@ -48,7 +48,7 @@ abstract class action
    * @access public
    * @param form $form フォームインスタンス
    */
-  public function set_form($form)
+  public function set_form(form $form)
   {
     $this->form = $form;
   }
@@ -70,7 +70,7 @@ abstract class action
    * @access public
    * @param model $model モデルインスタンス
    */
-  public function set_model($model)
+  public function set_model(model $model)
   {
     $this->model = $model;
   }
@@ -114,7 +114,7 @@ abstract class action
    * @access public
    * @param template_convert $template_convert テンプレート置換処理インスタンス
    */
-  public function set_template_convert($template_convert)
+  public function set_template_convert(template_convert $template_convert)
   {
     $this->template_convert = $template_convert;
   }
@@ -158,7 +158,7 @@ abstract class action
    * @access public
    * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_FILES,$_COOKIE)
    */
-  public function set_form_to_model($request_parameter_array)
+  public function set_form_to_model(array $request_parameter_array)
   {
     foreach ($request_parameter_array as $request_parameter_name)
     {
@@ -176,7 +176,7 @@ abstract class action
    * @access public
    * @param array $request_parameter_array 設定したいリクエストパラメータの種類が格納されている配列($_GET,$_POST,$_FILES,$_COOKIE)
    */
-  public function set_form_data($request_parameter_array)
+  public function set_form_data(array $request_parameter_array)
   {
     $form = $this->get_form();
     $properties = $form->get_all_properties();
@@ -191,7 +191,7 @@ abstract class action
           {
             $is_exists = true;
             // フォームのセッターに値を設定していく
-            $form->execute_accessor_method('set', $key, $val);
+            $form->execute_accessor_method('set', $field, $val);
             break 2;
           }
         }
@@ -210,7 +210,7 @@ abstract class action
    * @param array $model_array 連想配列化したモデルクラスインスタンス
    * @param array $no_session_array セッションデータに設定しない項目名がキーになっている配列
    */
-  protected function set_model_to_session($model_array, $no_session_array = array())
+  protected function set_model_to_session(array $model_array, array $no_session_array = array())
   {
     foreach ($model_array as $key => $val)
     {

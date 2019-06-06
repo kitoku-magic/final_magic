@@ -1,9 +1,5 @@
 <?php
 
-require_once('template_convert_single.php');
-require_once('template_convert_multi.php');
-require_once('template_convert_bool.php');
-
 /**
  * テンプレート置換処理基底クラス
  *
@@ -15,14 +11,13 @@ require_once('template_convert_bool.php');
  */
 class template_convert
 {
-
   /**
    * 単一値格納用の配列設定
    *
    * @access protected
    * @param array $single_array 単一値格納用の配列
    */
-  protected function set_single_array($single_array)
+  protected function set_single_array(array $single_array)
   {
     $this->single_array = $single_array;
   }
@@ -56,7 +51,7 @@ class template_convert
    * @access protected
    * @param array $multi_array 複数値格納用の配列
    */
-  protected function set_multi_array($multi_array)
+  protected function set_multi_array(array $multi_array)
   {
     $this->multi_array = $multi_array;
   }
@@ -90,7 +85,7 @@ class template_convert
    * @access protected
    * @param array $multi_array_yes 複数値で値が一致時のデータ配列
    */
-  protected function set_multi_array_yes($multi_array_yes)
+  protected function set_multi_array_yes(array $multi_array_yes)
   {
     $this->multi_array_yes = $multi_array_yes;
   }
@@ -124,7 +119,7 @@ class template_convert
    * @access protected
    * @param array $multi_array_no 複数値で値が不一致時のデータ配列
    */
-  protected function set_multi_array_no($multi_array_no)
+  protected function set_multi_array_no(array $multi_array_no)
   {
     $this->multi_array_no = $multi_array_no;
   }
@@ -158,7 +153,7 @@ class template_convert
    * @access protected
    * @param array $bool_array 論理値格納用の配列
    */
-  protected function set_bool_array($bool_array)
+  protected function set_bool_array(array $bool_array)
   {
     $this->bool_array = $bool_array;
   }
@@ -192,7 +187,7 @@ class template_convert
    * @access public
    * @param template_convert_single $template_convert_single 単一値専用のテンプレート置換処理インスタンス
    */
-  public function set_template_convert_single($template_convert_single)
+  public function set_template_convert_single(template_convert_single $template_convert_single)
   {
     $this->template_convert_single = $template_convert_single;
   }
@@ -214,7 +209,7 @@ class template_convert
    * @access public
    * @param template_convert_multi $template_convert_multi 複数値専用のテンプレート置換処理インスタンス
    */
-  public function set_template_convert_multi($template_convert_multi)
+  public function set_template_convert_multi(template_convert_multi $template_convert_multi)
   {
     $this->template_convert_multi = $template_convert_multi;
   }
@@ -236,7 +231,7 @@ class template_convert
    * @access public
    * @param template_convert_bool $template_convert_bool 論理値専用のテンプレート置換処理インスタンス
    */
-  public function set_template_convert_bool($template_convert_bool)
+  public function set_template_convert_bool(template_convert_bool $template_convert_bool)
   {
     $this->template_convert_bool = $template_convert_bool;
   }

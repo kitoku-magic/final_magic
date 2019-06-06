@@ -23,6 +23,9 @@ class log
 
   /**
    * シングルトンなクラスインスタンスを取得
+   *
+   * @access public
+   * @return this 自クラスのインスタンス
    */
   public static function get_instance()
   {
@@ -53,12 +56,13 @@ class log
   public function write($value)
   {
     // ログに書き込む
-    file_put_contents(config::get_instance()->get_base_path() . '/log/' . date_create()->format('Ymd') . '.log', $value . PHP_EOL, FILE_APPEND);
+    file_put_contents(config::get_instance()->get_base_path() . '/log/' . utility::get_date_time_with_timezone(utility::get_current_time_stamp())->format('Ymd') . '.log', $value . PHP_EOL, FILE_APPEND);
   }
 
   /**
    * シングルトンな自クラスのインスタンス
    *
+   * @access private
    */
   private static $log;
 }

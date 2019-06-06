@@ -79,6 +79,12 @@ class base_repository_impl implements base_repository
     return $this->associated_entities;
   }
 
+  /**
+   * データアクセスサーバーの種別（master・slave等）を設定する
+   *
+   * @param string $server_type データアクセスサーバーの種別（master・slave等）
+   * @param bool $is_init ストレージハンドラーを初期化するか否か
+   */
   protected function set_server_type($server_type, $is_init = true)
   {
     if ('master' === $server_type || 'slave' === $server_type)

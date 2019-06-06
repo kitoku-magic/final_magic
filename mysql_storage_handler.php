@@ -16,11 +16,23 @@ class mysql_storage_handler extends rdbms_storage_handler
    */
   const SQL_ESCAPE_CHARACTER = '`';
 
-  protected function set_statement($statement)
+  /**
+   * ステートメントクラスインスタンスを設定する
+   *
+   * @access protected
+   * @param mysqli_stmt ステートメントクラスインスタンス
+   */
+  protected function set_statement(mysqli_stmt $statement)
   {
     $this->statement = $statement;
   }
 
+  /**
+   * ステートメントクラスインスタンスを取得する
+   *
+   * @access protected
+   * @return mysqli_stmt ステートメントクラスインスタンス
+   */
   protected function get_statement()
   {
     return $this->statement;
@@ -48,7 +60,7 @@ class mysql_storage_handler extends rdbms_storage_handler
       if (null !== $connection->connect_error)
       {
         // DB接続失敗
-        $this->set_error_message('DB接続に失敗しました。 ' . $connection->connect_error);
+        $this->set_error_message($config->search('db_connect_error') . $connection->connect_error);
 
         return false;
       }
@@ -72,8 +84,6 @@ class mysql_storage_handler extends rdbms_storage_handler
   {
     $result = null;
 
-    $config = config::get_instance();
-
     $result_set = $this->get_result_set();
 
     if (0 < count($result_set))
@@ -90,7 +100,7 @@ class mysql_storage_handler extends rdbms_storage_handler
       {
         if ($statement->fetch())
         {
-          require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
+          $this->read_entity_class($entity_class_name);
           $entity = new $entity_class_name;
           foreach ($result_set['data'] as $column_name => $column_value)
           {
@@ -112,7 +122,7 @@ class mysql_storage_handler extends rdbms_storage_handler
       {
         while ($statement->fetch())
         {
-          require_once $config->search('app_base_dir') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'entity' . DIRECTORY_SEPARATOR . $entity_class_name . '.php';
+          $this->read_entity_class($entity_class_name);
           $entity = new $entity_class_name;
           foreach ($result_set['data'] as $column_name => $column_value)
           {

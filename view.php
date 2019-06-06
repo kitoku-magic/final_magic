@@ -28,9 +28,9 @@ class view
    */
   protected function init()
   {
-    $this->set_action(null);
-    $this->set_model(null);
-    $this->set_output_html('');
+    $this->action = null;
+    $this->model = null;
+    $this->output_html = '';
   }
 
   /**
@@ -39,7 +39,7 @@ class view
    * @access public
    * @param action $action アクションクラスインスタンス
    */
-  public function set_action($action)
+  public function set_action(action $action)
   {
     $this->action = $action;
   }
@@ -61,7 +61,7 @@ class view
    * @access public
    * @param model $model モデルインスタンス
    */
-  public function set_model($model)
+  public function set_model(model $model)
   {
     $this->model = $model;
   }

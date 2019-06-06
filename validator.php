@@ -39,11 +39,17 @@ abstract class validator
 
   const TELEPHONE_FORMAT_MESSAGE = '{show_name}は不正な番号です';
 
+  /**
+   * コンストラクタ
+   */
   public function __construct()
   {
     $this->init();
   }
 
+  /**
+   * 初期化処理
+   */
   protected function init()
   {
     $this->set_form();
@@ -51,8 +57,16 @@ abstract class validator
     $this->set_is_any_item(false);
   }
 
+  /**
+   * バリデーション設定をする
+   */
   abstract public function set_validation_setting();
 
+  /**
+   * バリデーションを行う
+   *
+   * @return boolean バリデーションが問題なければtrue
+   */
   public function validate()
   {
     $result = true;
@@ -94,22 +108,49 @@ abstract class validator
     return $result;
   }
 
-  protected function is_required($value, $options)
+  /**
+   * 必須項目チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_required($value, array $options)
   {
     return $value !== null;
   }
 
-  protected function is_not_empty($value, $options)
+  /**
+   * 未入力チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_not_empty($value, array $options)
   {
     return $value !== '';
   }
 
-  protected function is_allow_empty($value, $options)
+  /**
+   * 未入力を許可する
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   */
+  protected function is_allow_empty($value, array $options)
   {
     $this->set_is_any_item(true);
   }
 
-  protected function is_min_length($value, $options)
+  /**
+   * 最小桁数チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_min_length($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -123,12 +164,26 @@ abstract class validator
     }
   }
 
-  protected function is_max_length($value, $options)
+  /**
+   * 最大桁数チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_max_length($value, array $options)
   {
     return utility::check_max_length($value, $options['value']);
   }
 
-  protected function is_mail_format($value, $options)
+  /**
+   * メール書式チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_mail_format($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -147,7 +202,14 @@ abstract class validator
     }
   }
 
-  protected function is_alpha_num($value, $options)
+  /**
+   * 半角英数字チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_alpha_num($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -161,7 +223,14 @@ abstract class validator
     }
   }
 
-  protected function is_japanese($value, $options)
+  /**
+   * 日本語（ひらがな、カタカナ、漢字）チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_japanese($value, array $options)
   {
     // https://qiita.com/tabo_purify/items/df8f2aa17094b1a60c82 のコメント欄を参考
 
@@ -181,7 +250,14 @@ abstract class validator
     }
   }
 
-  protected function is_japanese_extend($value, $options)
+  /**
+   * 日本語（ひらがな、カタカナ、漢字、全角数字、全角スペース）チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_japanese_extend($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -199,7 +275,14 @@ abstract class validator
     }
   }
 
-  protected function is_hiragana($value, $options)
+  /**
+   * ひらがなチェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_hiragana($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -217,7 +300,14 @@ abstract class validator
     }
   }
 
-  protected function is_number($value, $options)
+  /**
+   * 半角数字チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_number($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -247,7 +337,14 @@ abstract class validator
     }
   }
 
-  protected function is_integer($value, $options)
+  /**
+   * 整数チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_integer($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -282,7 +379,14 @@ abstract class validator
     }
   }
 
-  protected function is_range($value, $options)
+  /**
+   * 数値の範囲チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_range($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -312,7 +416,14 @@ abstract class validator
     }
   }
 
-  protected function is_date($value, $options)
+  /**
+   * 日付チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_date($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -326,7 +437,14 @@ abstract class validator
     }
   }
 
-  protected function is_zip_code_format($value, $options)
+  /**
+   * 郵便番号書式チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_zip_code_format($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -340,7 +458,14 @@ abstract class validator
     }
   }
 
-  protected function is_telephone_format($value, $options)
+  /**
+   * 電話番号書式チェック
+   *
+   * @param mixed $value チェックする値
+   * @param array $options オプション設定
+   * @return boolean
+   */
+  protected function is_telephone_format($value, array $options)
   {
     $is_check = $this->is_check($value);
 
@@ -354,6 +479,12 @@ abstract class validator
     }
   }
 
+  /**
+   * チェックをするかどうかを調べる
+   *
+   * @param mixed $value チェックする値
+   * @return boolean
+   */
   protected function is_check($value)
   {
     $result = true;

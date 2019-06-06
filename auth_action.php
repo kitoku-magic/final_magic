@@ -56,7 +56,7 @@ abstract class auth_action extends action
     if (true === isset($_SESSION['auth_login_id']))
     {
       // 10分以上経過していたらセッションを無効にする
-      if (($_SESSION['session_time'] + (10 * 60)) < time())
+      if (($_SESSION['session_time'] + (10 * 60)) < utility::get_current_time_stamp())
       {
         // 「ログインしている」というデータを消す
         unset($_SESSION['auth_login_id']);
@@ -64,12 +64,12 @@ abstract class auth_action extends action
       else
       {
         // 一定時間(ここでは５分)経過していたらセッションIDを更新する
-        if (($_SESSION['session_time'] + (5 * 60)) < time())
+        if (($_SESSION['session_time'] + (5 * 60)) < utility::get_current_time_stamp())
         {
           // セッションIDの変更と古いセッションの破棄
           session_regenerate_id(true);
           // セッション基準時間を更新
-          $_SESSION['session_time'] = time();
+          $_SESSION['session_time'] = utility::get_current_time_stamp();
         }
       }
     }

@@ -11,7 +11,6 @@
  */
 class security
 {
-
   /**
    * HTML出力用のエスケープ処理を行う(XSSで使う)
    *

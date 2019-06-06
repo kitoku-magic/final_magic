@@ -11,14 +11,13 @@
  */
 class template_convert_bool
 {
-
   /**
    * テンプレート置換ロジック実行
    *
    * @access public
    * @param view $view ビュークラスインスタンス
    */
-  public function convert_template($view)
+  public function convert_template(view $view)
   {
     $output_html = $view->get_output_html();
 

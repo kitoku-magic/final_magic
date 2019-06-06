@@ -11,7 +11,6 @@
  */
 class utility
 {
-
   /**
    * コンストラクタ
    *
@@ -31,7 +30,7 @@ class utility
    * @param null $default_val 配列に値が存在しない場合に使用する値
    * @return mixed 配列に値が存在すればその値、存在しなければnullを返す
    */
-  static public function get_array_val($array, $key, $default_val = null)
+  static public function get_array_val(array $array, $key, $default_val = null)
   {
     return isset($array[$key]) ? $array[$key] : $default_val;
   }
@@ -261,7 +260,7 @@ class utility
   }
 
   /**
-   * ユニークなIDを取得する
+   * ユニークなIDを取得する（推測可能なので注意）
    *
    * @access public
    * @return string ユニークID
@@ -272,13 +271,65 @@ class utility
   }
 
   /**
+   * UNIXタイムスタンプ値から現在のタイムゾーンのDateTimeを取得する
+   *
+   * @access public
+   * @return int $unix_timestamp UNIXタイムスタンプ値
+   * @return DateTime 現在のタイムゾーンのDateTimeオブジェクト
+   */
+  static public function get_date_time_with_timezone($unix_timestamp)
+  {
+    $date_time = new DateTime('@' . $unix_timestamp);
+    $date_time->setTimezone(new DateTimeZone(config::get_instance()->search('time_zone')));
+
+    return $date_time;
+  }
+
+  /**
+   * 現在のUNIXタイムスタンプ値を取得する
+   *
+   * @access public
+   * @return string 現在のUNIXタイムスタンプ値
+   */
+  static public function get_current_time_stamp()
+  {
+    $microtime = microtime();
+    $microtime = explode(' ', $microtime);
+
+    return $microtime[1];
+  }
+
+  /**
+   * ディレクトリを作成する（mkdirのラッパー）
+   *
+   * @access public
+   * @param string $file_path ファイルパス
+   * @return bool
+   */
+  static public function make_directory($file_path)
+  {
+    // エラーチェックは戻り値で行うのでエラー抑制演算子を付ける
+    if (false === is_dir($file_path) && false === @mkdir($file_path, 0777, true))
+    {
+      // 同時に同名のディレクトリを作るアクセスがあった時のチェック用
+      if (false === is_dir($file_path))
+      {
+        // ディレクトリ作成に失敗
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * バブルソートを行う
    *
    * @access public
    * @param array $arr ソート対象の配列
    * @param boolean $asc 昇順か降順かを表すフラグ
    */
-  static public function bubble_sort(&$arr, $asc = true)
+  static public function bubble_sort(array &$arr, $asc = true)
   {
     $flg = true;
     $arr_size = count($arr);
@@ -334,7 +385,7 @@ class utility
    * @param int $offset 配列内のソート開始位置
    * @param boolean $asc 昇順か降順かを表すフラグ
    */
-  static public function merge_sort(&$arr, $size, $offset, $asc = true)
+  static public function merge_sort(array &$arr, $size, $offset, $asc = true)
   {
     // ブロックが1つになったら分割終了
     if (1 >= $size)
@@ -389,7 +440,7 @@ class utility
    * @param int $end ソートする終了位置のインデックス
    * @param boolean $asc 昇順か降順かを表すフラグ
    */
-  static public function quick_sort(&$arr, $begin, $end, $asc = true)
+  static public function quick_sort(array &$arr, $begin, $end, $asc = true)
   {
     // 開始位置と終了位置が重なるか交わったら処理終了
     if ($begin >= $end)
@@ -464,7 +515,7 @@ class utility
    * @param int $begin ソートする開始位置のインデックス
    * @param int $end ソートする終了位置のインデックス
    */
-  static protected function exchange(&$arr, $begin, $end)
+  static protected function exchange(array &$arr, $begin, $end)
   {
     $tmp = $arr[$begin];
     $arr[$begin] = $arr[$end];

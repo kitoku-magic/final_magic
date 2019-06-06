@@ -28,7 +28,7 @@ class custom_exception extends Exception
     $severity = E_ERROR,
     $file_name = __FILE__,
     $line_no = __LINE__,
-    $previous = null
+    Exception $previous = null
   ) {
     parent::__construct($message, 0);
     $this->set_message($message);
@@ -36,7 +36,10 @@ class custom_exception extends Exception
     $this->set_severity($severity);
     $this->set_file_name($file_name);
     $this->set_line_no($line_no);
-    $this->set_previous($previous);
+    if (null !== $previous)
+    {
+      $this->set_previous($previous);
+    }
   }
 
   /**
@@ -155,7 +158,7 @@ class custom_exception extends Exception
    * @access protected
    * @param Exception $previous 前に発生した例外
    */
-  protected function set_previous($previous)
+  protected function set_previous(Exception $previous)
   {
     $this->previous = $previous;
   }
@@ -180,12 +183,11 @@ class custom_exception extends Exception
   {
     // リファラーがセットされていれば取得
     $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-    $date_time = new DateTime();
 
     // ログに書き込む文字列を生成
     // 優先度中：getTraceAsString()は文字切れして表示されてしまう？要調査＆改善
     $severity = $this->get_severity();
-    $error_string = $date_time->format('Y-m-d H:i:s') . ' ' . (isset(self::$error_levels[$severity]) ? self::$error_levels[$severity] : $severity) . ' '
+    $error_string = utility::get_date_time_with_timezone(utility::get_current_time_stamp())->format('Y-m-d H:i:s') . ' ' . (isset(self::$error_levels[$severity]) ? self::$error_levels[$severity] : $severity) . ' '
       . $this->get_original_code() . ' ' . $this->get_message() . ' ' . $this->get_file_name() . '(' . $this->get_line_no() . ')' . PHP_EOL
       . 'Referer = ' . $referer . PHP_EOL . $this->getTraceAsString();
 
@@ -193,6 +195,11 @@ class custom_exception extends Exception
     log::get_instance()->write($error_string);
   }
 
+  /**
+   * エラーレベル配列定数
+   *
+   * @access private
+   */
   private static $error_levels = array(
     E_ERROR => 'E_ERROR',
     E_WARNING => 'E_WARNING',

@@ -1,7 +1,5 @@
 <?php
 
-require_once('kvs_handle.php');
-
 /**
  * KVSハンドルクラス memcache
  *

@@ -311,19 +311,15 @@ abstract class file_upload_action extends action
       if (false === array_key_exists($file_upload_setting['name'], $errors))
       {
         $log_error_message = '';
-        $file_path = $config->search('app_file_tmp_save_path') . DIRECTORY_SEPARATOR . $file_upload_setting['save_path_identifier'] . DIRECTORY_SEPARATOR . date_create()->format('Ymd');
-        // エラーチェックは戻り値で行うのでエラー抑制演算子を付ける
-        if (false === is_dir($file_path) && false === @mkdir($file_path, 0700, true))
+        $file_path = $config->search('app_file_tmp_save_path') . DIRECTORY_SEPARATOR . $file_upload_setting['save_path_identifier'] . DIRECTORY_SEPARATOR . utility::get_date_time_with_timezone(utility::get_current_time_stamp())->format('Ymd');
+        $r = utility::make_directory($file_path);
+        if (false === $r)
         {
-          // 同時に同名のディレクトリを作るアクセスがあった時のチェック用
-          if (false === is_dir($file_path))
-          {
-            // ディレクトリ作成に失敗
-            $log_error_message = 'アップロードファイルの保存先ディレクトリの作成に失敗しました';
-          }
+          $log_error_message = 'アップロードファイルの保存先ディレクトリの作成に失敗しました';
         }
         if ('' === $log_error_message)
         {
+          chmod($file_path, 0700);
           // ファイル名を推測困難にしたいケースの場合
           if (true === isset($file_upload_setting['is_secret']) &&
             true === $file_upload_setting['is_secret'])

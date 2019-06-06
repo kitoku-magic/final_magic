@@ -41,6 +41,7 @@ class db_manager
   /**
    * DB内のハンドラーを一つ取得する
    *
+   * @access private
    * @param string DBホスト名
    * @return storage_handler DBストレージハンドラークラスインスタンス
    */
